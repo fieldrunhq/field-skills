@@ -1,0 +1,21 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "fieldrun",
+  "description": "Run Fieldrun field jobs on your own machine: claim a job by its code, review what you captured, and submit your findings.",
+  "owner": {
+    "name": "Fieldrun"
+  },
+  "plugins": [
+    {
+      "name": "fieldrun",
+      "displayName": "Fieldrun",
+      "description": "Claim a Fieldrun job by its five-character code, run it on your own setup, review what was captured, and submit the findings.",
+      "version": "0.1.0",
+      "source": "./plugins/fieldrun",
+      "category": "productivity",
+      "homepage": "https://fieldrun.dev",
+      "repository": "https://github.com/fieldrunhq/fieldrun-skills",
+      "keywords": ["start-fieldrun", "review-fieldrun", "submit-fieldrun", "field-testing", "mcp", "compatibility"]
+    }
+  ]
+}

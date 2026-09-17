@@ -1,0 +1,9 @@
+{
+  "name": "fieldrun",
+  "version": "0.1.0",
+  "description": "Claim, review and submit Fieldrun field jobs from your own machine.",
+  "author": {
+    "name": "Fieldrun"
+  },
+  "keywords": ["start-fieldrun", "review-fieldrun", "submit-fieldrun", "field-testing", "mcp", "compatibility"]
+}
