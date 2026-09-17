@@ -1,4 +1,4 @@
-# fieldrun-skills
+# field-skills
 
 Three Claude Code skills for running Fieldrun field jobs on your own machine.
 
@@ -56,12 +56,24 @@ read — never what those servers are or what they connect to.
 
 | Variable | Meaning |
 | --- | --- |
-| `FIELDRUN_API_URL` | API host. Default `https://api.fieldrun.dev` |
+| `FIELDRUN_API_URL` | API host. Defaults to production — see below |
 | `FIELDRUN_TOKEN` | Firebase ID token. `dev:<uid>` uses the development bypass against a non-production server |
 | `FIELDRUN_HOME` | Overrides `~/fieldruns` |
 
 The token is read from the environment on purpose: it must never be written into
 the run directory, because that directory is what gets handed back to Fieldrun.
+
+### Environments
+
+| | URL |
+| --- | --- |
+| Production (default) | `https://fieldrun-backend-production.up.railway.app` |
+| Development | `https://alluring-renewal-develop.up.railway.app` |
+
+```bash
+FIELDRUN_API_URL=https://alluring-renewal-develop.up.railway.app \
+  node --test plugins/fieldrun/tests/*.test.mjs
+```
 
 ## Layout
 

@@ -54,8 +54,14 @@ export function isValidJobCode(value) {
 
 // ---- API ------------------------------------------------------------------
 
+/// Where the skill sends everything. Defaults to production; point
+/// FIELDRUN_API_URL at the development service (or a localhost port) to work
+/// against anything else.
+export const PRODUCTION_API_URL = 'https://fieldrun-backend-production.up.railway.app';
+export const DEVELOPMENT_API_URL = 'https://alluring-renewal-develop.up.railway.app';
+
 export function apiBase() {
-  return (process.env.FIELDRUN_API_URL || 'https://api.fieldrun.dev').replace(/\/+$/, '');
+  return (process.env.FIELDRUN_API_URL || PRODUCTION_API_URL).replace(/\/+$/, '');
 }
 
 /// The practitioner's Firebase ID token. Read from the environment so a token
