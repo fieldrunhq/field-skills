@@ -8,19 +8,19 @@ Three Claude Code skills for running Fieldrun field jobs on your own machine.
 | `/review-fieldrun [CODE]` | Reads a run back to you and strips anything private. Never uploads |
 | `/submit-fieldrun <CODE>` | Shows exactly what will be sent, then submits it |
 
-`start-fieldrun` **requires a job code** — five characters such as `4HGP6`.
+`start-fieldrun` **requires a job code** — ten characters such as `HFDJQXPC5I`.
 
 ## Every run lives in one place
 
 ```
 ~/fieldruns/
-  4HGP6/
+  HFDJQXPC5I/
     job.json            title, brief, reward, claimed timestamp
     run.json            run id and status
     PROMPT.md           the task, verbatim
     environment.json    the captured fingerprint
     NOTES.md            what you observed
-  DYG2R/
+  K3M8PQRW2Z/
     …
 ```
 
@@ -31,7 +31,7 @@ happened to be in is how work gets lost. `FIELDRUN_HOME` overrides the root.
 ## The order matters
 
 ```
-GET  /run/:code        → title, brief, reward        (no prompt)
+GET  /run/:id          → title, brief, reward        (no prompt)
   ↓ the user reads the brief and says yes
 POST /run/:code/claim  → the run, and the prompt
 ```

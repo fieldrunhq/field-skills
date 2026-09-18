@@ -13,10 +13,11 @@ nothing useful to do without a code.
 
 ## What a job code looks like
 
-Five characters from `23456789ABCDEFGHJKMNPQRSTVWXYZ`, for example `4HGP6`.
-`0`, `1`, `O`, `I`, `L` and `U` are never in a code. Input is case-insensitive.
+Ten characters from `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`, for example
+`HFDJQXPC5I`. Uppercase only, so there is no case to get wrong; input is
+accepted in any case and uppercased.
 
-If the code the user gave is not five valid characters, say so and ask again
+If the id the user gave is not ten valid characters, say so and ask again
 rather than calling the API — a malformed code cannot match a job.
 
 ## Steps

@@ -13,37 +13,35 @@ const m = await import('../lib/fieldrun.mjs');
 
 test('every run lives under the one configured root', () => {
   assert.equal(m.fieldrunsRoot(), ROOT);
-  assert.equal(m.runDir('4hgp6'), join(ROOT, '4HGP6'));
+  assert.equal(m.runDir('hfdjqxpc5i'), join(ROOT, 'HFDJQXPC5I'));
 });
 
 test('the run directory is named by the normalized code', () => {
-  assert.equal(m.runDir('  4hgp6 '), join(ROOT, '4HGP6'));
+  assert.equal(m.runDir('  hfdjqxpc5i '), join(ROOT, 'HFDJQXPC5I'));
 });
 
 test('run files all sit inside that one directory', () => {
-  const files = m.runFiles('4HGP6');
+  const files = m.runFiles('HFDJQXPC5I');
   for (const [name, path] of Object.entries(files)) {
     if (name === 'dir') continue;
-    assert.ok(path.startsWith(join(ROOT, '4HGP6')), `${name} escaped the run directory`);
+    assert.ok(path.startsWith(join(ROOT, 'HFDJQXPC5I')), `${name} escaped the run directory`);
   }
 });
 
 // The client refuses malformed codes locally so a typo never reaches the API,
 // and so the alphabet cannot drift from the server's without a test failing.
-test('the code alphabet matches the server and excludes ambiguous glyphs', () => {
-  assert.equal(m.JOB_CODE_ALPHABET, '23456789ABCDEFGHJKMNPQRSTVWXYZ');
-  assert.equal(m.JOB_CODE_LENGTH, 5);
-  for (const ambiguous of ['0', '1', 'I', 'L', 'O', 'U']) {
-    assert.ok(!m.JOB_CODE_ALPHABET.includes(ambiguous));
-  }
+test('the id alphabet matches the server: uppercase letters and digits', () => {
+  assert.equal(m.JOB_CODE_ALPHABET, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+  assert.equal(m.JOB_CODE_LENGTH, 10);
+  assert.ok(!/[a-z]/.test(m.JOB_CODE_ALPHABET));
 });
 
-test('code validation is case-insensitive and length-checked', () => {
-  assert.ok(m.isValidJobCode('4hgp6'));
-  assert.ok(m.isValidJobCode('4HGP6'));
-  assert.ok(!m.isValidJobCode('4HGP'));
-  assert.ok(!m.isValidJobCode('4HGP66'));
-  assert.ok(!m.isValidJobCode('4HGPO'), 'O is not in the alphabet');
+test('id validation is case-insensitive and length-checked', () => {
+  assert.ok(m.isValidJobCode('hfdjqxpc5i'));
+  assert.ok(m.isValidJobCode('HFDJQXPC5I'));
+  assert.ok(!m.isValidJobCode('HFDJQXPC5'));
+  assert.ok(!m.isValidJobCode('HFDJQXPC5II'));
+  assert.ok(!m.isValidJobCode('HFDJQXPC5-'), 'punctuation is not in the alphabet');
   assert.ok(!m.isValidJobCode(''));
 });
 
@@ -59,14 +57,14 @@ test('the environment fingerprint carries what CI cannot tell you', async () => 
 });
 
 test('listing runs ignores directories that are not job codes', async () => {
-  await mkdir(join(ROOT, 'AB2CD'), { recursive: true });
-  await writeFile(join(ROOT, 'AB2CD', 'job.json'), JSON.stringify({ code: 'AB2CD', title: 'A job' }));
-  await writeFile(join(ROOT, 'AB2CD', 'run.json'), JSON.stringify({ id: 'r1', claimedAt: '2026-01-01T00:00:00Z' }));
+  await mkdir(join(ROOT, 'AB2CDEFGHJ'), { recursive: true });
+  await writeFile(join(ROOT, 'AB2CDEFGHJ', 'job.json'), JSON.stringify({ code: 'AB2CDEFGHJ', title: 'A job' }));
+  await writeFile(join(ROOT, 'AB2CDEFGHJ', 'run.json'), JSON.stringify({ id: 'r1', claimedAt: '2026-01-01T00:00:00Z' }));
   await mkdir(join(ROOT, 'not-a-code'), { recursive: true });
 
   const runs = await m.listRuns();
   assert.equal(runs.length, 1);
-  assert.equal(runs[0].code, 'AB2CD');
+  assert.equal(runs[0].code, 'AB2CDEFGHJ');
   assert.equal(runs[0].job.title, 'A job');
 });
 

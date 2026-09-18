@@ -40,8 +40,8 @@ export const runFiles = (code) => ({
 // Mirrors packages/shared/src/lib/jobs/job-code.ts on the server. Kept in sync
 // by the test below, which fails if the two alphabets ever diverge.
 
-export const JOB_CODE_ALPHABET = '23456789ABCDEFGHJKMNPQRSTVWXYZ';
-export const JOB_CODE_LENGTH = 5;
+export const JOB_CODE_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+export const JOB_CODE_LENGTH = 10;
 const JOB_CODE_RE = new RegExp(`^[${JOB_CODE_ALPHABET}]{${JOB_CODE_LENGTH}}$`);
 
 export function normalizeJobCode(value) {
