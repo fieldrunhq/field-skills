@@ -1,6 +1,6 @@
 ---
 name: submit-fieldrun
-description: Submit a reviewed Fieldrun run back to Fieldrun — the outcome, the notes and the environment fingerprint. Use when the user wants to send, submit, upload or finish a field run. Requires the job code, confirms exactly what will be sent, and only then posts to the API.
+description: Submit a reviewed Fieldrun run back to Fieldrun — the outcome, the notes and the environment fingerprint. Use when the user wants to send, submit, upload or finish a field run. Requires the job code, needs no account, confirms exactly what will be sent, and hands back a claim URL where the practitioner signs in to be paid.
 ---
 
 # Submit Fieldrun
@@ -18,10 +18,10 @@ Read `~/fieldruns/<CODE>/` — `run.json` for the run id, `NOTES.md` for the
 observations, `environment.json` for the fingerprint.
 
 - No directory for that code: nothing to submit, point at `/start-fieldrun`.
-- `run.json` missing a run id: the claim never completed; the run must be
-  started again.
-- Status already `submitted`, `accepted` or `rejected`: it has been sent. Say so
-  and stop rather than sending a second time.
+- `run.json` missing a run id: the start never completed; run `/start-fieldrun`
+  again to get a new run id.
+- Status already `submitted`: it has been sent. Show the claim URL stored in
+  `run.json` and stop rather than sending a second time.
 
 ### 2. Establish the outcome
 
@@ -56,51 +56,46 @@ cannot be undone from here.
 node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.submitRun('RUN_ID', payload), null, 2)))"
 ```
 
-Then update `run.json` with the returned status, so a second invocation can tell
-the run has already gone.
+`RUN_ID` is the id in `run.json`, not the job code. No account is needed to
+send: the upload is anonymous, and it is the claim URL that comes back which
+ties the work to a person.
+
+Then update `run.json` with the returned status and the returned `url`, so a
+second invocation can tell the run has already gone and can show the link again.
 
 Handle the failures plainly:
 
-- `409 INVALID_STATUS` — already submitted. Nothing was sent twice.
-- `403 FORBIDDEN` — this run belongs to another account. Check the token.
+- `409 ALREADY_SUBMITTED` — already sent. Nothing was sent twice; show the
+  claim URL from `run.json`.
+- `409 ALREADY_CLAIMED` — already submitted and already claimed by an account.
+- `410 EXPIRED` — the run sat unsubmitted past its two-week window. The work
+  cannot be sent; starting the job again is the only option.
+- `404 NOT_FOUND` — the run id does not resolve.
 - `400 INVALID_OUTCOME` — the outcome was not one of the three.
-- `401` — the machine token is missing or revoked.
+- `429 RATE_LIMITED` — too many submissions from this address in the last hour.
 
-### 5. Report
+### 5. Report and hand over the claim URL
 
-Confirm what was sent and that the customer reviews it next. Leave the local
-directory in place; the practitioner keeps their own record.
+The response carries a `url`. **Give it to the user and explain what it is**,
+because this is the one thing they must act on:
 
-## Authentication
+> Submitted. Claim it at <the URL> — opening that link and signing in attaches
+> this run to your account so you can be paid for it. The link is the only way
+> to claim this run, so keep it; it expires in two weeks.
 
-Every Fieldrun skill needs a machine token. If `readToken()` returns nothing —
-or any call answers `401` — **ask the API where to get one** rather than quoting
-a URL from this file:
+Write the URL into `run.json` as well, so it is recoverable from the run
+directory if the chat is lost.
 
-```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(await m.tokensUrl()))"
-```
+Then confirm what was sent and that the customer reviews it next. Leave the
+local directory in place; the practitioner keeps their own record.
 
-Then tell the user, using the URL that call returned:
+## Configuration
 
-> You need a Fieldrun machine token — it is separate from any other login.
-> Create one at <the URL>, then run:
->
-> ```
-> mkdir -p ~/.fieldrun
-> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
-> ```
+There is none. These skills need no account, no token and no credentials file —
+if anything here asks the user to sign in, that is a bug.
 
-**Never hardcode the address.** This plugin ships to machines that may never be
-updated, and the service knows its own current sign-in page. A 401 body carries
-`tokensUrl` for exactly this reason.
-
-`FIELDRUN_TOKEN` overrides the file if it is set. A `401` means the token is
-missing, wrong or revoked — say so plainly rather than retrying.
-
-The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
-back to Fieldrun, and a credential must never sit somewhere it can be uploaded
-by accident.
+`FIELDRUN_API_URL` overrides the API host (default: production) and
+`FIELDRUN_HOME` overrides the run root; both exist for development.
 
 ## Never
 
@@ -108,3 +103,5 @@ by accident.
 - Never submit a run the user has not been able to read first.
 - Never rewrite the user's notes on the way out; submit what they wrote.
 - Never resubmit a run that already has a terminal status.
+- Never ask the user to sign in before submitting. The claim URL is where that
+  happens, and only after the work is safely uploaded.

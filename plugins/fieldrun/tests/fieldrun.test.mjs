@@ -73,3 +73,33 @@ test('the api base strips a trailing slash', () => {
   assert.equal(m.apiBase(), 'http://localhost:4000');
   delete process.env.FIELDRUN_API_URL;
 });
+
+// The whole point of the rewrite: a first-time installer has no token, and
+// nothing in these skills should ever ask for one. This test fails loudly if
+// credential handling creeps back in.
+test('the client carries no credentials at all', async () => {
+  for (const name of ['readToken', 'isAuthenticated', 'tokensUrl', 'CREDENTIALS_PATH']) {
+    assert.equal(m[name], undefined, `${name} is back — these skills must stay unauthenticated`);
+  }
+
+  const { createServer } = await import('node:http');
+  const seen = [];
+  const server = createServer((req, res) => {
+    seen.push(req.headers);
+    res.writeHead(201, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ success: true, runId: 'r-1' }));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  process.env.FIELDRUN_API_URL = `http://127.0.0.1:${server.address().port}`;
+
+  try {
+    const started = await m.startRun('hfdjqxpc5i');
+    assert.equal(started.body.runId, 'r-1');
+    assert.equal(seen.length, 1);
+    assert.equal(seen[0].authorization, undefined);
+    assert.equal(seen[0]['x-dev-auth-uid'], undefined);
+  } finally {
+    delete process.env.FIELDRUN_API_URL;
+    await new Promise((resolve) => server.close(resolve));
+  }
+});

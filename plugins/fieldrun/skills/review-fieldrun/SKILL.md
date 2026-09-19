@@ -62,36 +62,13 @@ cloud VM cannot produce, and they are the reason the run is worth paying for.
 Tell the user whether the run is ready, what you changed at their direction, and
 that `/submit-fieldrun <CODE>` sends it.
 
-## Authentication
+## Configuration
 
-Every Fieldrun skill needs a machine token. If `readToken()` returns nothing —
-or any call answers `401` — **ask the API where to get one** rather than quoting
-a URL from this file:
+There is none. These skills need no account, no token and no credentials file —
+if anything here asks the user to sign in, that is a bug.
 
-```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(await m.tokensUrl()))"
-```
-
-Then tell the user, using the URL that call returned:
-
-> You need a Fieldrun machine token — it is separate from any other login.
-> Create one at <the URL>, then run:
->
-> ```
-> mkdir -p ~/.fieldrun
-> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
-> ```
-
-**Never hardcode the address.** This plugin ships to machines that may never be
-updated, and the service knows its own current sign-in page. A 401 body carries
-`tokensUrl` for exactly this reason.
-
-`FIELDRUN_TOKEN` overrides the file if it is set. A `401` means the token is
-missing, wrong or revoked — say so plainly rather than retrying.
-
-The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
-back to Fieldrun, and a credential must never sit somewhere it can be uploaded
-by accident.
+`FIELDRUN_API_URL` overrides the API host (default: production) and
+`FIELDRUN_HOME` overrides the run root; both exist for development.
 
 ## Never
 

@@ -64,45 +64,19 @@ export function apiBase() {
   return (process.env.FIELDRUN_API_URL || PRODUCTION_API_URL).replace(/\/+$/, '');
 }
 
-/// Where the machine token lives. Deliberately NOT inside ~/fieldruns: that
-/// directory is the one handed back to Fieldrun, and a credential must never be
-/// somewhere it can be uploaded by accident.
-export const CREDENTIALS_PATH = join(homedir(), '.fieldrun', 'credentials.json');
-
 /**
- * The machine token, from the environment or from disk.
+ * Every call these skills make is unauthenticated, deliberately.
  *
- * Created at fieldrun.dev/settings/tokens and pasted here once. It is a Fieldrun
- * token rather than a Firebase one because those expire hourly and refreshing
- * one needs a live browser session, which a terminal does not have.
+ * A practitioner should be able to install the plugin, run a job and see what
+ * the work is like before deciding whether to have an account with us. The
+ * account is needed only to be paid, so that is where the sign-in lives: the
+ * claim URL handed back at submit time. Nothing here reads a credential, and
+ * there is no token on disk for this plugin to leak.
  */
-export function readToken() {
-  if (process.env.FIELDRUN_TOKEN) return process.env.FIELDRUN_TOKEN;
-  try {
-    const parsed = JSON.parse(readFileSync(CREDENTIALS_PATH, 'utf8'));
-    return typeof parsed.token === 'string' ? parsed.token : null;
-  } catch {
-    return null;
-  }
-}
-
-export function isAuthenticated() {
-  return Boolean(readToken());
-}
-
-function authHeaders() {
-  const token = readToken();
-  if (!token) return {};
-  // The dev bypass is only honoured by a non-production server; sending it
-  // costs nothing against production, which ignores the header.
-  if (token.startsWith('dev:')) return { 'x-dev-auth-uid': token.slice(4) };
-  return { authorization: `Bearer ${token}` };
-}
-
 export async function api(method, path, body) {
   const response = await fetch(`${apiBase()}${path}`, {
     method,
-    headers: { 'content-type': 'application/json', ...authHeaders() },
+    headers: { 'content-type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const text = await response.text();
@@ -112,28 +86,23 @@ export async function api(method, path, body) {
 }
 
 /**
- * Where to send someone who has no token.
+ * Begin a run and get back its id, the job, and the prompt.
  *
- * Asked of the API rather than hardcoded here. This plugin is published and
- * most installed copies will never be updated; the service is deployed
- * continuously. Letting the server name its own sign-in page means a domain
- * change fixes every copy at once, including the stale ones.
+ * One call, because there is nothing to gate the prompt behind: no slot is
+ * reserved and no commitment is made, so a practitioner who reads the brief and
+ * walks away has cost the job nothing. Consent still happens before the work —
+ * it is just the skill asking, not the server withholding.
  */
-export async function tokensUrl() {
-  try {
-    const probe = await fetch(`${apiBase()}/me`, { signal: AbortSignal.timeout(8000) });
-    const body = await probe.json();
-    if (typeof body?.tokensUrl === 'string') return body.tokensUrl;
-  } catch {
-    // Offline, or an older API that does not say. Fall through.
-  }
-  return `${apiBase().replace(/\/\/api\./, '//')}/settings/tokens`;
-}
+export const startRun = (code) =>
+  api('POST', '/runs/pending/start', { code: normalizeJobCode(code) });
 
-export const getJob = (code) => api('GET', `/run/${normalizeJobCode(code)}`);
-export const claimJob = (code) => api('POST', `/run/${normalizeJobCode(code)}/claim`);
-export const submitRun = (runId, payload) => api('POST', `/runs/${runId}/submit`, payload);
+/// Upload the finished run. The response carries the claim URL — the only place
+/// a practitioner is ever asked to sign in.
+export const submitRun = (runId, payload) =>
+  api('POST', `/runs/pending/${runId}/submit`, payload);
 
+/// What the claim page shows. Useful for re-reading a submitted run's status.
+export const getRun = (runId) => api('GET', `/runs/pending/${runId}`);
 
 // ---- Environment ----------------------------------------------------------
 

@@ -1,11 +1,16 @@
 ---
 name: start-fieldrun
-description: Start a Fieldrun field job on this machine from its five-character job code. Use when the user wants to begin, claim, accept or run a Fieldrun job, or gives a job code such as 4HGP6. The job code is required — ask for it if the user did not provide one. Shows the brief and gets explicit consent before claiming, captures the environment fingerprint, and writes everything to ~/fieldruns/<CODE>/.
+description: Start a Fieldrun field job on this machine from its ten-character job code. Use when the user wants to begin, accept or run a Fieldrun job, or gives a job code such as HFDJQXPC5I. The job code is required — ask for it if the user did not provide one. No account or token is needed. Shows the brief and gets explicit consent before setting the job up, captures the environment fingerprint, and writes everything to ~/fieldruns/<CODE>/.
 ---
 
 # Start Fieldrun
 
-Claim one Fieldrun job and set it up to be run on this machine.
+Set one Fieldrun job up to be run on this machine.
+
+**No sign-in, no token, nothing to configure.** If the user has just installed
+the plugin, this works. The only moment an account is ever needed is after the
+run is submitted, to be paid for it — and `submit-fieldrun` hands them that link
+when the time comes.
 
 A job code is **required**. If the command arguments contain one, use it. If not,
 ask the user for it with AskUserQuestion and stop until you have it — there is
@@ -22,60 +27,41 @@ rather than calling the API — a malformed code cannot match a job.
 
 ## Steps
 
-### 1. Look up the job, before claiming anything
+### 1. Start the run
 
 ```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.getJob('CODE'), null, 2)))"
+node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.startRun('CODE'), null, 2)))"
 ```
 
-This returns the title, the brief, the reward and the cap. **It deliberately
-does not return the prompt.** The brief is what the user is consenting to.
+This returns the run id, the job (title, brief, reward, cap), the prompt and any
+sample output, all at once.
 
-- `404` — no such job, or it is not approved. Tell the user the code did not
-  resolve. Do not retry variations of it.
-- `400` — the code is malformed.
+- `404 JOB_NOT_FOUND` — no such job, or it is not approved. Tell the user the
+  code did not resolve. Do not retry variations of it.
+- `429 RATE_LIMITED` — too many starts from this address in the last hour.
+
+Starting reserves nothing. No slot is consumed and no commitment is made, so a
+user who reads the brief and walks away has cost the job nothing. **Keep the run
+id** — `submit-fieldrun` needs it, and it is the only handle on this run.
 
 ### 2. Get explicit consent
 
-Show the user the title, the brief, and the reward. Then ask — with
-AskUserQuestion — whether to accept the job. **Do not claim on their behalf.**
+Show the user the title, the brief and the reward. Then ask — with
+AskUserQuestion — whether they want to do the job.
 
-Claiming is a commitment: it consumes one of the job's slots, it is one run per
-person per job, and it cannot be undone from here. A user who has not read the
-brief has not consented to anything.
+If they decline, stop. Do not write the run directory and do not show them the
+prompt. The run id simply expires unused.
 
-If they decline, stop. Do not claim, and do not create any directory.
+### 3. Write the run directory
 
-### 3. Claim it
-
-Only after the user has said yes:
-
-```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.claimJob('CODE'), null, 2)))"
-```
-
-The claim response carries the **prompt** — the actual work. This is the first
-point at which the instructions exist locally, which is the intended order:
-consent, then instructions.
-
-Handle the failures plainly:
-
-- `409 ALREADY_CLAIMED` — they already hold a run on this job. Point them at
-  `/review-fieldrun` instead of claiming again.
-- `409 JOB_FULL` — the job hit its cap. Nothing to do.
-- `403 OWN_JOB` — this is their own job; a customer cannot run it themselves.
-- `401` — not signed in. See **Authentication** below.
-
-### 4. Write the run directory
-
-Everything for every job lives under one root, `~/fieldruns`, one folder per
-code. Create `~/fieldruns/<CODE>/` and write:
+Only after the user has said yes. Everything for every job lives under one root,
+`~/fieldruns`, one folder per code. Create `~/fieldruns/<CODE>/` and write:
 
 | File | Contents |
 | --- | --- |
-| `job.json` | code, title, brief, reward, claimed timestamp |
-| `run.json` | the run id and status — `submit-fieldrun` needs the id |
-| `PROMPT.md` | the prompt from the claim response, verbatim |
+| `job.json` | code, title, brief, reward, started timestamp |
+| `run.json` | the **run id** and status — `submit-fieldrun` needs the id |
+| `PROMPT.md` | the prompt from the start response, verbatim |
 | `environment.json` | the captured fingerprint |
 | `NOTES.md` | a template for the practitioner's observations |
 
@@ -83,7 +69,7 @@ Capture the environment with `captureEnvironment()` rather than asking the user
 what they are running. People report the version they believe they are on, which
 is often not the one that is actually executing.
 
-### 5. Hand over
+### 4. Hand over
 
 Tell the user:
 
@@ -97,43 +83,19 @@ Then **stop**. Do not run the prompt for them. The deliverable is what a
 practitioner observes on their own machine; an agent executing the task instead
 produces a result about this session, not about their environment.
 
-## Authentication
+## Configuration
 
-Every Fieldrun skill needs a machine token. If `readToken()` returns nothing —
-or any call answers `401` — **ask the API where to get one** rather than quoting
-a URL from this file:
+There is none, and there should be none. `FIELDRUN_API_URL` overrides the API
+host (default: production) and `FIELDRUN_HOME` overrides the run root; both
+exist for development and neither is something a practitioner needs to set.
 
-```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(await m.tokensUrl()))"
-```
-
-Then tell the user, using the URL that call returned:
-
-> You need a Fieldrun machine token — it is separate from any other login.
-> Create one at <the URL>, then run:
->
-> ```
-> mkdir -p ~/.fieldrun
-> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
-> ```
-
-**Never hardcode the address.** This plugin ships to machines that may never be
-updated, and the service knows its own current sign-in page. A 401 body carries
-`tokensUrl` for exactly this reason.
-
-`FIELDRUN_TOKEN` overrides the file if it is set. A `401` means the token is
-missing, wrong or revoked — say so plainly rather than retrying.
-
-The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
-back to Fieldrun, and a credential must never sit somewhere it can be uploaded
-by accident.
-
-`FIELDRUN_API_URL` overrides the API host (default: production).
+If any call returns `401`, that is a bug in the service, not a missing login —
+these endpoints are public. Say so rather than asking the user for a token.
 
 ## Never
 
-- Never claim a job the user has not explicitly accepted.
+- Never ask the user to sign in, create a token, or write a credentials file.
+  None of these skills use one.
+- Never show the prompt or write the run directory before the user has accepted.
 - Never write the run directory anywhere but `~/fieldruns/<CODE>/`.
-- Never put the auth token inside the run directory — that directory is handed
-  back to Fieldrun.
 - Never run the job's prompt yourself.
