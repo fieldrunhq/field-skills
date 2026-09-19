@@ -72,7 +72,7 @@ export const CREDENTIALS_PATH = join(homedir(), '.fieldrun', 'credentials.json')
 /**
  * The machine token, from the environment or from disk.
  *
- * Created at fieldrun.io/settings/tokens and pasted here once. It is a Fieldrun
+ * Created at fieldrun.dev/settings/tokens and pasted here once. It is a Fieldrun
  * token rather than a Firebase one because those expire hourly and refreshing
  * one needs a live browser session, which a terminal does not have.
  */

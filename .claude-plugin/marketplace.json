@@ -13,7 +13,7 @@
       "version": "0.1.0",
       "source": "./plugins/fieldrun",
       "category": "productivity",
-      "homepage": "https://fieldrun.io",
+      "homepage": "https://fieldrun.dev",
       "repository": "https://github.com/fieldrunhq/field-skills",
       "keywords": [
         "start-fieldrun",
