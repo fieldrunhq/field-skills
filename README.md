@@ -57,7 +57,7 @@ read — never what those servers are or what they connect to.
 | Variable | Meaning |
 | --- | --- |
 | `FIELDRUN_API_URL` | API host. Defaults to production — see below |
-| `FIELDRUN_TOKEN` | Firebase ID token. `dev:<uid>` uses the development bypass against a non-production server |
+| `FIELDRUN_TOKEN` | Machine token. Overrides `~/.fieldrun/credentials.json` |
 | `FIELDRUN_HOME` | Overrides `~/fieldruns` |
 
 The token is read from the environment on purpose: it must never be written into

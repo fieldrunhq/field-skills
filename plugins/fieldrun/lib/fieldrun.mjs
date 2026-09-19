@@ -111,6 +111,25 @@ export async function api(method, path, body) {
   return { status: response.status, ok: response.ok, body: parsed };
 }
 
+/**
+ * Where to send someone who has no token.
+ *
+ * Asked of the API rather than hardcoded here. This plugin is published and
+ * most installed copies will never be updated; the service is deployed
+ * continuously. Letting the server name its own sign-in page means a domain
+ * change fixes every copy at once, including the stale ones.
+ */
+export async function tokensUrl() {
+  try {
+    const probe = await fetch(`${apiBase()}/me`, { signal: AbortSignal.timeout(8000) });
+    const body = await probe.json();
+    if (typeof body?.tokensUrl === 'string') return body.tokensUrl;
+  } catch {
+    // Offline, or an older API that does not say. Fall through.
+  }
+  return `${apiBase().replace(/\/\/api\./, '//')}/settings/tokens`;
+}
+
 export const getJob = (code) => api('GET', `/run/${normalizeJobCode(code)}`);
 export const claimJob = (code) => api('POST', `/run/${normalizeJobCode(code)}/claim`);
 export const submitRun = (runId, payload) => api('POST', `/runs/${runId}/submit`, payload);
