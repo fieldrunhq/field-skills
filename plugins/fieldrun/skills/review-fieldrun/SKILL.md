@@ -62,6 +62,26 @@ cloud VM cannot produce, and they are the reason the run is worth paying for.
 Tell the user whether the run is ready, what you changed at their direction, and
 that `/submit-fieldrun <CODE>` sends it.
 
+## Authentication
+
+Every Fieldrun skill needs a machine token. If `readToken()` returns nothing,
+stop and tell the user exactly this, then wait:
+
+> You need a machine token first. Create one at
+> https://fieldrun.io/settings/tokens, then run:
+>
+> ```
+> mkdir -p ~/.fieldrun
+> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
+> ```
+
+`FIELDRUN_TOKEN` overrides the file if it is set. A `401` from any call means the
+token is wrong or has been revoked — say so plainly rather than retrying.
+
+The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
+back to Fieldrun, and a credential must never sit somewhere it can be uploaded
+by accident.
+
 ## Never
 
 - Never upload anything from this skill.

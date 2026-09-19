@@ -9,7 +9,7 @@ import { homedir } from 'node:os';
 import os from 'node:os';
 import { join } from 'node:path';
 import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -64,11 +64,34 @@ export function apiBase() {
   return (process.env.FIELDRUN_API_URL || PRODUCTION_API_URL).replace(/\/+$/, '');
 }
 
-/// The practitioner's Firebase ID token. Read from the environment so a token
-/// never lands in a file inside the run directory, which is the thing the
-/// practitioner is about to hand back to us.
+/// Where the machine token lives. Deliberately NOT inside ~/fieldruns: that
+/// directory is the one handed back to Fieldrun, and a credential must never be
+/// somewhere it can be uploaded by accident.
+export const CREDENTIALS_PATH = join(homedir(), '.fieldrun', 'credentials.json');
+
+/**
+ * The machine token, from the environment or from disk.
+ *
+ * Created at fieldrun.io/settings/tokens and pasted here once. It is a Fieldrun
+ * token rather than a Firebase one because those expire hourly and refreshing
+ * one needs a live browser session, which a terminal does not have.
+ */
+export function readToken() {
+  if (process.env.FIELDRUN_TOKEN) return process.env.FIELDRUN_TOKEN;
+  try {
+    const parsed = JSON.parse(readFileSync(CREDENTIALS_PATH, 'utf8'));
+    return typeof parsed.token === 'string' ? parsed.token : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isAuthenticated() {
+  return Boolean(readToken());
+}
+
 function authHeaders() {
-  const token = process.env.FIELDRUN_TOKEN;
+  const token = readToken();
   if (!token) return {};
   // The dev bypass is only honoured by a non-production server; sending it
   // costs nothing against production, which ignores the header.
@@ -92,17 +115,6 @@ export const getJob = (code) => api('GET', `/run/${normalizeJobCode(code)}`);
 export const claimJob = (code) => api('POST', `/run/${normalizeJobCode(code)}/claim`);
 export const submitRun = (runId, payload) => api('POST', `/runs/${runId}/submit`, payload);
 
-/**
- * Submit without an account.
- *
- * The practitioner has no credential on this machine and should not need one:
- * asking someone to paste an API token into a terminal before they can help is
- * how you lose them. This posts the work anonymously and returns a URL they
- * open in the browser where they are already signed in — the run is attached
- * there, which is the first moment anyone knows who did it.
- */
-export const submitAnonymously = (code, payload) =>
-  api('POST', '/submissions', { code: normalizeJobCode(code), ...payload });
 
 // ---- Environment ----------------------------------------------------------
 

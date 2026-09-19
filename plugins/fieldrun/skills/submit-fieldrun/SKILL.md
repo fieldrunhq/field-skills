@@ -53,39 +53,47 @@ cannot be undone from here.
 ### 4. Submit
 
 ```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.submitAnonymously('CODE', payload), null, 2)))"
+node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.submitRun('RUN_ID', payload), null, 2)))"
 ```
 
-**No sign-in is needed here, and that is deliberate.** The submission is recorded
-unattributed and returns a URL. Write the URL and its expiry into `run.json`, so
-a practitioner who closes the terminal can still find it.
+Then update `run.json` with the returned status, so a second invocation can tell
+the run has already gone.
 
 Handle the failures plainly:
 
-- `404 JOB_NOT_FOUND` — the code does not resolve, or the job is no longer open.
+- `409 INVALID_STATUS` — already submitted. Nothing was sent twice.
+- `403 FORBIDDEN` — this run belongs to another account. Check the token.
 - `400 INVALID_OUTCOME` — the outcome was not one of the three.
-- `429 RATE_LIMITED` — too many submissions from this machine in an hour.
+- `401` — the machine token is missing or revoked.
 
-### 5. Give them the link
+### 5. Report
 
-Show the URL on its own line and say plainly what it does:
+Confirm what was sent and that the customer reviews it next. Leave the local
+directory in place; the practitioner keeps their own record.
 
-> Your run is recorded. Open this to add it to your account:
-> https://fieldrun.io/submit/<token>
+## Authentication
+
+Every Fieldrun skill needs a machine token. If `readToken()` returns nothing,
+stop and tell the user exactly this, then wait:
+
+> You need a machine token first. Create one at
+> https://fieldrun.io/settings/tokens, then run:
 >
-> Nothing is attached to anyone until you open it and sign in. The link is good
-> for 7 days, and it is in `~/fieldruns/<CODE>/run.json` if you need it later.
+> ```
+> mkdir -p ~/.fieldrun
+> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
+> ```
 
-That sentence matters. A practitioner has just handed over work and has no
-account yet — telling them exactly when it becomes theirs is the difference
-between a link that gets clicked and one that looks like a tracking pixel.
+`FIELDRUN_TOKEN` overrides the file if it is set. A `401` from any call means the
+token is wrong or has been revoked — say so plainly rather than retrying.
 
-Leave the local directory in place; the practitioner keeps their own record.
+The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
+back to Fieldrun, and a credential must never sit somewhere it can be uploaded
+by accident.
 
 ## Never
 
 - Never submit without showing the payload and getting a yes.
 - Never submit a run the user has not been able to read first.
 - Never rewrite the user's notes on the way out; submit what they wrote.
-- Never resubmit a run that already has a submission URL in `run.json` — show
-  them the existing link instead.
+- Never resubmit a run that already has a terminal status.

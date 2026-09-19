@@ -99,10 +99,25 @@ produces a result about this session, not about their environment.
 
 ## Authentication
 
-Set `FIELDRUN_TOKEN` to a Firebase ID token. Against a non-production server a
-value of `dev:<uid>` uses the development bypass instead.
+Every Fieldrun skill needs a machine token. If `readToken()` returns nothing,
+stop and tell the user exactly this, then wait:
 
-`FIELDRUN_API_URL` overrides the API host (default `https://api.fieldrun.io`).
+> You need a machine token first. Create one at
+> https://fieldrun.io/settings/tokens, then run:
+>
+> ```
+> mkdir -p ~/.fieldrun
+> echo '{"token":"fr_..."}' > ~/.fieldrun/credentials.json
+> ```
+
+`FIELDRUN_TOKEN` overrides the file if it is set. A `401` from any call means the
+token is wrong or has been revoked — say so plainly rather than retrying.
+
+The token lives in `~/.fieldrun/`, never in `~/fieldruns/`. The latter is handed
+back to Fieldrun, and a credential must never sit somewhere it can be uploaded
+by accident.
+
+`FIELDRUN_API_URL` overrides the API host (default: production).
 
 ## Never
 
