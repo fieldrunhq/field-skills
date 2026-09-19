@@ -53,27 +53,39 @@ cannot be undone from here.
 ### 4. Submit
 
 ```bash
-node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.submitRun('RUN_ID', payload), null, 2)))"
+node -e "import('./lib/fieldrun.mjs').then(async m => console.log(JSON.stringify(await m.submitAnonymously('CODE', payload), null, 2)))"
 ```
 
-Then update `run.json` locally with the returned status, so a second invocation
-can tell the run has already gone.
+**No sign-in is needed here, and that is deliberate.** The submission is recorded
+unattributed and returns a URL. Write the URL and its expiry into `run.json`, so
+a practitioner who closes the terminal can still find it.
 
 Handle the failures plainly:
 
-- `409 INVALID_STATUS` — already submitted. Nothing was sent twice.
-- `403 FORBIDDEN` — this run belongs to another account. Check `FIELDRUN_TOKEN`.
+- `404 JOB_NOT_FOUND` — the code does not resolve, or the job is no longer open.
 - `400 INVALID_OUTCOME` — the outcome was not one of the three.
-- `401` — not signed in.
+- `429 RATE_LIMITED` — too many submissions from this machine in an hour.
 
-### 5. Report
+### 5. Give them the link
 
-Confirm what was sent and that the customer reviews it next. Leave the local
-directory in place — the practitioner keeps their own record.
+Show the URL on its own line and say plainly what it does:
+
+> Your run is recorded. Open this to add it to your account:
+> https://fieldrun.io/submit/<token>
+>
+> Nothing is attached to anyone until you open it and sign in. The link is good
+> for 7 days, and it is in `~/fieldruns/<CODE>/run.json` if you need it later.
+
+That sentence matters. A practitioner has just handed over work and has no
+account yet — telling them exactly when it becomes theirs is the difference
+between a link that gets clicked and one that looks like a tracking pixel.
+
+Leave the local directory in place; the practitioner keeps their own record.
 
 ## Never
 
 - Never submit without showing the payload and getting a yes.
 - Never submit a run the user has not been able to read first.
 - Never rewrite the user's notes on the way out; submit what they wrote.
-- Never resubmit a run that already has a terminal status.
+- Never resubmit a run that already has a submission URL in `run.json` — show
+  them the existing link instead.

@@ -92,6 +92,18 @@ export const getJob = (code) => api('GET', `/run/${normalizeJobCode(code)}`);
 export const claimJob = (code) => api('POST', `/run/${normalizeJobCode(code)}/claim`);
 export const submitRun = (runId, payload) => api('POST', `/runs/${runId}/submit`, payload);
 
+/**
+ * Submit without an account.
+ *
+ * The practitioner has no credential on this machine and should not need one:
+ * asking someone to paste an API token into a terminal before they can help is
+ * how you lose them. This posts the work anonymously and returns a URL they
+ * open in the browser where they are already signed in — the run is attached
+ * there, which is the first moment anyone knows who did it.
+ */
+export const submitAnonymously = (code, payload) =>
+  api('POST', '/submissions', { code: normalizeJobCode(code), ...payload });
+
 // ---- Environment ----------------------------------------------------------
 
 async function version(command, args) {

@@ -102,7 +102,7 @@ produces a result about this session, not about their environment.
 Set `FIELDRUN_TOKEN` to a Firebase ID token. Against a non-production server a
 value of `dev:<uid>` uses the development bypass instead.
 
-`FIELDRUN_API_URL` overrides the API host (default `https://api.fieldrun.dev`).
+`FIELDRUN_API_URL` overrides the API host (default `https://api.fieldrun.io`).
 
 ## Never
 
