@@ -84,6 +84,23 @@ already returns which agents are present, how many sessions each has and when
 each was last used, and a job asking about the machine should be answered from
 that rather than from memory.
 
+**Never go looking for session history by hand.** `captureEnvironment()` already
+returns it, per project, and two traps make a manual search reliably report
+nothing on a machine that is full of it:
+
+- `~/.claude/sessions/` is **not** the sessions. It holds session keys and
+  metadata and contains no transcripts. The name is a decoy.
+- The real transcripts are `~/.claude/projects/<launch-cwd>/*.jsonl`, and every
+  one of those directory names begins with `-`. A shell `find projects/* -name
+  '*.jsonl'` reads that as a flag and fails or returns nothing.
+
+Both have already produced a run reporting "no session history" for a machine
+with 31 sessions across 8 projects. If you find yourself about to write that
+someone has no history, you have hit one of these — use the captured data.
+
+A false negative is worse than a gap. "This practitioner had no sessions" reads
+as a finding, and a customer will bank it.
+
 So: gather every fact the machine can answer, write it into `NOTES.md` clearly
 marked as captured, and leave the rest blank for the user. What stays theirs is
 judgment, history and friction — which tools they have actually abandoned and

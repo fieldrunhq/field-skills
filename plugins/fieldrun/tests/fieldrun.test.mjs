@@ -214,3 +214,47 @@ test('subagent detection reads names and tools, never descriptions', async () =>
     process.env.HOME = realHome;
   }
 });
+
+// Both of these traps produced a false negative in a real run — an agent
+// reported "no session history" for a machine with 31 sessions. A false
+// negative reads as a finding and a customer banks it, so both are pinned.
+test('session history survives the hyphen and ignores the sessions decoy', async () => {
+  const { mkdtemp: mkTmp } = await import('node:fs/promises');
+  const fake = await mkTmp(join(tmpdir(), 'fieldrun-proj-'));
+
+  // Real transcripts, in directories named the way Claude Code names them:
+  // the launch cwd with separators hyphenated, so every name starts with '-'.
+  const busy = join(fake, '.claude', 'projects', '-Users-someone-Documents-AcmeCorp');
+  const quiet = join(fake, '.claude', 'projects', '-Users-someone');
+  await mkdir(busy, { recursive: true });
+  await mkdir(quiet, { recursive: true });
+  for (const n of ['a', 'b', 'c']) await writeFile(join(busy, `${n}.jsonl`), '{}');
+  await writeFile(join(quiet, 'd.jsonl'), '{}');
+
+  // The decoy: ~/.claude/sessions holds keys and metadata, never transcripts.
+  await mkdir(join(fake, '.claude', 'sessions'), { recursive: true });
+  await writeFile(join(fake, '.claude', 'sessions', '10906.json'), '{}');
+  await writeFile(join(fake, '.claude', 'sessions', '10906.key'), 'x');
+
+  const realHome = process.env.HOME;
+  process.env.HOME = fake;
+  try {
+    const fresh = await import(`../lib/fieldrun.mjs?proj=${Date.now()}`);
+    const projects = await fresh.claudeProjects();
+
+    assert.equal(projects.length, 2, 'both hyphen-named project dirs must be found');
+    assert.equal(projects[0].sessions, 3, 'busiest project first');
+    assert.equal(projects[1].sessions, 1);
+    assert.equal(projects.reduce((n, p) => n + p.sessions, 0), 4,
+      'the sessions/ decoy must contribute nothing');
+
+    // The directory names decode to real paths and name employers and clients.
+    const serialized = JSON.stringify(projects);
+    assert.ok(!/AcmeCorp|Users|someone/i.test(serialized), serialized);
+    for (const p of projects) {
+      assert.deepEqual(Object.keys(p).sort(), ['firstUsed', 'lastUsed', 'sessions']);
+    }
+  } finally {
+    process.env.HOME = realHome;
+  }
+});

@@ -69,6 +69,17 @@ believe they are on and the version they believe they have, which is frequently
 not the one executing — and they are worse still at remembering what they have
 stopped using. A last-used date settles that; memory does not.
 
+For Claude Code it also reports **per-project session counts and date ranges** —
+how many projects someone has going, how the work is spread across them, and how
+recently each was touched. Counts and dates only, never the directory names:
+those decode back to real paths and name employers, clients and unreleased work.
+
+Two traps make this worth doing in one place rather than per job, and both have
+produced a run that reported no history for a machine with 31 sessions:
+`~/.claude/sessions/` is session keys, not transcripts, and the real transcript
+directories are all named after the launch cwd with separators hyphenated, so
+they begin with `-` and break shell globbing.
+
 Only file names, counts and modification times are read. No conversation
 contents are ever opened, and the walk is depth-limited so a symlink cannot turn
 environment capture into a full-disk scan.

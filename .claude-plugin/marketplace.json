@@ -10,7 +10,7 @@
       "name": "fieldrun",
       "displayName": "Fieldrun",
       "description": "Start a Fieldrun job by its ten-character code, run it on your own setup, review what was captured, and submit the findings. No account needed.",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "source": "./plugins/fieldrun",
       "category": "productivity",
       "homepage": "https://fieldrun.dev",

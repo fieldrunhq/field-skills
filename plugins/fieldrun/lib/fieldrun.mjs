@@ -212,6 +212,63 @@ function decodeProjectDir(name) {
 }
 
 /**
+ * Per-project session history for Claude Code.
+ *
+ * Two traps make this reliably report "no sessions" to anyone who looks the
+ * obvious way, and both have produced a false negative in a real run:
+ *
+ *  1. `~/.claude/sessions/` is NOT the sessions. It holds `.key` and `.json`
+ *     session metadata, is flat, and contains no transcripts at all. The name
+ *     is a decoy; the transcripts live under `projects/`.
+ *  2. Every directory under `projects/` is the launch cwd with separators
+ *     hyphenated, so all of them begin with `-`. A shell `find projects/* -name
+ *     '*.jsonl'` reads that leading hyphen as a flag and fails or returns
+ *     nothing. Node's readdir does not care, which is why this is done here
+ *     rather than left to whoever is running the job.
+ *
+ * A false negative is worse than a gap: "this practitioner had no history"
+ * reads as a finding, and a customer will bank it.
+ *
+ * Counts and dates only — never the directory names. They decode back to real
+ * paths and name employers, clients and unreleased work.
+ */
+export async function claudeProjects() {
+  const root = agentRoot('.claude');
+  if (!root) return [];
+
+  let entries = [];
+  try {
+    entries = await readdir(join(root, 'projects'), { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const projects = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const files = await findFiles(join(root, 'projects', entry.name), (n) => n.endsWith('.jsonl'));
+    if (!files.length) continue;
+
+    const times = [];
+    for (const file of files) {
+      try { times.push(statSync(file).mtime.getTime()); } catch { /* vanished */ }
+    }
+    if (!times.length) continue;
+    times.sort((a, b) => a - b);
+
+    projects.push({
+      sessions: files.length,
+      firstUsed: new Date(times[0]).toISOString().slice(0, 10),
+      lastUsed: new Date(times[times.length - 1]).toISOString().slice(0, 10),
+    });
+  }
+
+  // Busiest first. The shape of this list — how steeply it falls off — is the
+  // answer to how someone spreads their attention across projects.
+  return projects.sort((a, b) => b.sessions - a.sessions);
+}
+
+/**
  * Subagents configured on this machine.
  *
  * "Agent" means two different things and an inventory that reports only the
@@ -296,7 +353,9 @@ export async function detectAgents() {
       sessions: files.length,
       lastUsed: newest ? new Date(newest).toISOString().slice(0, 10) : null,
       daysSinceLastUsed: newest ? Math.floor((Date.now() - newest) / 86_400_000) : null,
-      ...(agent.dot === '.claude' ? { skills: claudeSkills(root) } : {}),
+      ...(agent.dot === '.claude'
+        ? { skills: claudeSkills(root), projects: await claudeProjects() }
+        : {}),
     });
   }
   return found;
