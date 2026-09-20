@@ -75,17 +75,23 @@ Handle the failures plainly:
 - `400 INVALID_OUTCOME` — the outcome was not one of the three.
 - `429 RATE_LIMITED` — too many submissions from this address in the last hour.
 
-### 5. Report and hand over the claim URL
+### 5. Report, and hand over the claim URL
 
 The response carries a `url`. **Give it to the user and explain what it is**,
-because this is the one thing they must act on:
+because this is the one thing they must act on. Write it into `run.json` as
+well, so it survives the chat being lost.
 
-> Submitted. Claim it at <the URL> — opening that link and signing in attaches
-> this run to your account so you can be paid for it. The link is the only way
-> to claim this run, so keep it; it expires in two weeks.
+End with this block, with the real URL substituted:
 
-Write the URL into `run.json` as well, so it is recoverable from the run
-directory if the chat is lost.
+```
+  NEXT  ─────────────────────────────────────────────────────────
+
+  →  Claim your run:  <the claim URL>
+     Signing in there attaches this run to your account so you can be paid.
+     It is the only way to claim it, and it expires in two weeks.
+
+  ────────────────────────────────────────────────────────────────
+```
 
 Then confirm what was sent and that the customer reviews it next. Leave the
 local directory in place; the practitioner keeps their own record.

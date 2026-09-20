@@ -63,10 +63,25 @@ declaring it ready, confirm:
 where they hesitated, and what they had to look up. Those are the findings a
 cloud VM cannot produce, and they are the reason the run is worth paying for.
 
-### 5. Report
+### 5. Report, and say what happens next
 
-Tell the user whether the run is ready, what you changed at their direction, and
-that `/submit-fieldrun <CODE>` sends it.
+Tell the user whether the run is ready and what you changed at their direction.
+Then end with this block, with the real code substituted and the `→` on whichever
+line is actually next:
+
+```
+  NEXT  ─────────────────────────────────────────────────────────
+
+  →  /submit-fieldrun <CODE>     send it, and get your claim link
+
+     ~/.fieldruns/<CODE>/NOTES.md    still missing an outcome or observations
+
+  ────────────────────────────────────────────────────────────────
+```
+
+If the run is not ready — no outcome, or notes that say nothing a reader can
+act on — put the arrow on the NOTES.md line instead and say what is missing.
+Only ever one arrow.
 
 ## Configuration
 

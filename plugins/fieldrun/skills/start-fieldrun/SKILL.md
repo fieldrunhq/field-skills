@@ -101,15 +101,32 @@ in a real environment is the field test. Stop and ask before anything
 destructive, anything that touches credentials, or anything that changes state
 the user would not expect a job to change.
 
-### 5. Hand over
+### 5. Hand over, and say what happens next
 
-Tell the user:
+Tell the user where the run directory is, what you captured, and what you left
+for them. Then end with this block, verbatim in shape, with the real code
+substituted. It is fenced so it renders as one visually distinct unit rather
+than dissolving into the paragraph above it:
 
-- where the run directory is,
-- what you captured and what you left for them,
-- that they should record what happened in `NOTES.md` — especially anything they
-  had to guess, work around, or read twice,
-- that `/submit-fieldrun <CODE>` sends it back when they are done.
+```
+  NEXT  ─────────────────────────────────────────────────────────
+
+  →  Do the work, and write what happened in NOTES.md
+     ~/.fieldruns/<CODE>/NOTES.md
+
+     /review-fieldrun <CODE>    check it over before it leaves the machine
+     /submit-fieldrun <CODE>    send it, and get your claim link
+
+  ────────────────────────────────────────────────────────────────
+```
+
+The `→` marks the one thing to do now. Only ever one arrow: a list of three
+equally-weighted options is the same as no guidance at all, and the whole point
+of the block is that someone skimming knows what to type next.
+
+Never end this skill without that block. A practitioner who has just been handed
+a directory and a task has no idea what the second half of the workflow is
+called, and a run that is done but never submitted is worth nothing to anybody.
 
 ## Configuration
 
