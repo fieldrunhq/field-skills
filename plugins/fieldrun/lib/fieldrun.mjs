@@ -189,6 +189,88 @@ function claudeSkills(root) {
 }
 
 /**
+ * Resolve one of Claude Code's project directory names back to a real path.
+ *
+ * The names are the cwd with every separator turned into a hyphen, which is
+ * ambiguous the moment a directory name contains one. Walk it greedily,
+ * preferring the longest segment that actually exists on disk — the same
+ * approach askrealme's extractor takes.
+ */
+function decodeProjectDir(name) {
+  const parts = name.replace(/^-+/, '').split('-');
+  let acc = '/';
+  let i = 0;
+  while (i < parts.length) {
+    let matched = false;
+    for (let k = parts.length - i; k > 0; k--) {
+      const trial = join(acc, parts.slice(i, i + k).join('-'));
+      if (existsSync(trial)) { acc = trial; i += k; matched = true; break; }
+    }
+    if (!matched) return null;
+  }
+  return acc === '/' ? null : acc;
+}
+
+/**
+ * Subagents configured on this machine.
+ *
+ * "Agent" means two different things and an inventory that reports only the
+ * first is wrong: there is the host doing the work — Claude Code, Codex — and
+ * there are the subagents a practitioner has defined inside it. The second set
+ * says far more about how someone actually works, and is invisible to every
+ * other kind of telemetry.
+ *
+ * Project-level agents are found through the host's own project list rather
+ * than by sweeping the disk: scanning a home directory for `.claude/agents`
+ * means walking places that have nothing to do with this job.
+ *
+ * Only the name, the scope and the declared tools are read. **Not the
+ * description and not the project path** — a subagent's description routinely
+ * names the mailbox, the customer or the internal system it exists to handle,
+ * and that is the practitioner's business, not the fingerprint's.
+ */
+export async function detectSubagents() {
+  const root = agentRoot('.claude');
+  if (!root) return [];
+
+  const dirs = [{ scope: 'user', dir: join(root, 'agents') }];
+  try {
+    for (const entry of await readdir(join(root, 'projects'), { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const project = decodeProjectDir(entry.name);
+      if (project) dirs.push({ scope: 'project', dir: join(project, '.claude', 'agents') });
+    }
+  } catch {
+    // No project list is simply no project-level agents to find.
+  }
+
+  const found = [];
+  const seen = new Set();
+  for (const { scope, dir } of dirs) {
+    let entries = [];
+    try { entries = await readdir(dir, { withFileTypes: true }); } catch { continue; }
+    for (const entry of entries) {
+      if (!entry.isFile() || !entry.name.endsWith('.md')) continue;
+      const key = `${scope}:${entry.name}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      let name = entry.name.replace(/\.md$/, '');
+      let tools = null;
+      try {
+        const head = readFileSync(join(dir, entry.name), 'utf8').slice(0, 2000);
+        name = /^name:\s*(.+)$/m.exec(head)?.[1].trim() ?? name;
+        tools = /^tools:\s*(.+)$/m.exec(head)?.[1].trim() ?? null;
+      } catch {
+        // An unreadable definition still counts as one that exists.
+      }
+      found.push({ name, scope, tools });
+    }
+  }
+  return found;
+}
+
+/**
  * Which agents are installed, how heavily each is used, and when each was last
  * touched.
  *
@@ -248,6 +330,7 @@ export async function captureEnvironment() {
     version('npm', ['--version']),
     detectAgents(),
   ]);
+  const subagents = await detectSubagents();
 
   return {
     os: `${os.type()} ${os.release()}`,
@@ -259,6 +342,7 @@ export async function captureEnvironment() {
       arch: process.arch,
       python, uv, git, npm,
       agents,
+      subagents,
       mcpServers: agents.find((a) => a.agent === 'Claude Code')?.skills.mcpServers ?? 0,
       capturedAt: new Date().toISOString(),
     },

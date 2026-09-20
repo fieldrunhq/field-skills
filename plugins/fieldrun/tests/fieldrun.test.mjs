@@ -176,3 +176,41 @@ test('every skill ends by naming the next step', async () => {
     assert.equal(arrows, 1, `${name} should mark exactly one next action, found ${arrows}`);
   }
 });
+
+// "Agent" means the host doing the work AND the subagents defined inside it.
+// An inventory reporting only the first misses how someone actually works.
+test('subagent detection reads names and tools, never descriptions', async () => {
+  const { mkdtemp: mkTmp } = await import('node:fs/promises');
+  const fake = await mkTmp(join(tmpdir(), 'fieldrun-sub-'));
+  const project = join(fake, 'work', 'secret-client');
+
+  await mkdir(join(fake, '.claude', 'agents'), { recursive: true });
+  await mkdir(join(project, '.claude', 'agents'), { recursive: true });
+  // Claude Code names a project dir after its cwd, separators hyphenated.
+  await mkdir(join(fake, '.claude', 'projects', project.replaceAll('/', '-')), { recursive: true });
+
+  await writeFile(join(fake, '.claude', 'agents', 'helper.md'),
+    '---\nname: helper\ndescription: Reads the acme-corp invoice mailbox\ntools: Read, Bash\n---\nbody');
+  await writeFile(join(project, '.claude', 'agents', 'triage.md'),
+    '---\nname: triage\ndescription: Sweeps support@secret-client.com\ntools: Bash\n---\nbody');
+
+  const realHome = process.env.HOME;
+  process.env.HOME = fake;
+  try {
+    const fresh = await import(`../lib/fieldrun.mjs?sub=${Date.now()}`);
+    const subs = await fresh.detectSubagents();
+    const names = subs.map((s) => s.name).sort();
+    assert.deepEqual(names, ['helper', 'triage']);
+    assert.equal(subs.find((s) => s.name === 'helper').scope, 'user');
+    assert.equal(subs.find((s) => s.name === 'triage').scope, 'project');
+    assert.equal(subs.find((s) => s.name === 'triage').tools, 'Bash');
+
+    // The description names a client and a mailbox. It must never leave.
+    const serialized = JSON.stringify(subs);
+    assert.ok(!/acme-corp|secret-client|mailbox|description/i.test(serialized), serialized);
+    // Nor the path the agent was found at.
+    assert.ok(!serialized.includes(project), 'project paths must not be captured');
+  } finally {
+    process.env.HOME = realHome;
+  }
+});

@@ -47,7 +47,8 @@ ask for explicit confirmation.
 The user must be able to see the fingerprint before it goes. It includes their
 OS and release, runtime and shell, and the agent inventory — which agents are
 installed, how many sessions each has, when each was last used, and the
-**names** of the Claude Code plugins on the machine. If they are not comfortable with a field, drop it and send the rest
+**names** of the Claude Code plugins and of any subagents configured on the
+machine. If they are not comfortable with a field, drop it and send the rest
 — a run with a missing field is still useful; a run the user regrets is not.
 
 If they have not run `/review-fieldrun`, suggest it before sending. Submission

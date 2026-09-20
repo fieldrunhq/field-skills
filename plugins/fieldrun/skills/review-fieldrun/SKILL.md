@@ -33,6 +33,11 @@ This is the point of the skill. What a practitioner writes while debugging on
 their own machine routinely contains things they would not choose to send:
 
 - absolute paths carrying their real name (`/Users/jane.doe/...`),
+- the captured **subagent names** in `environment.json`. These are the single
+  most telling field captured: a subagent is named after the job it does, so
+  `support-triage` says the practitioner runs a support desk and `acme-billing`
+  names a client outright. Descriptions and project paths are never captured,
+  but the names alone can be enough. Show them and ask,
 - the captured agent inventory in `environment.json`, which **names** the
   plugins and skills installed on the machine. A plugin name can say what
   someone is working on or who they work for. Show the list and ask — naming is

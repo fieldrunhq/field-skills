@@ -54,7 +54,15 @@ before it writes anything or shows you the prompt.
 `captureEnvironment()` reads the OS and release, the Node version, the shell,
 the host agent, and an **inventory of the AI agents installed on the machine**:
 which are present, how many sessions each has, when each was last used, and the
-names and versions of the Claude Code plugins configured.
+names and versions of the Claude Code plugins configured, and the **subagents**
+defined on the machine — because "agent" means both the host doing the work and
+the subagents a practitioner has built inside it, and an inventory reporting
+only the first misses how someone actually works.
+
+Subagents are found through the host's own project list rather than by sweeping
+the disk, and only their name, scope and declared tools are read. Never their
+description and never the project path: a subagent description routinely names
+the mailbox, the customer or the internal system it exists to handle.
 
 It does not ask the practitioner any of this. People report the tool they
 believe they are on and the version they believe they have, which is frequently
