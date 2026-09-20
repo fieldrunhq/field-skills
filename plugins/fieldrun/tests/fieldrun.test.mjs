@@ -103,3 +103,48 @@ test('the client carries no credentials at all', async () => {
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+// Agent detection is the field a cloud VM cannot produce, so it is the one most
+// worth pinning: it must find what is there, stay quiet about what is not, and
+// never read a conversation's contents.
+test('agent detection reports sessions and last use', async () => {
+  const { mkdtemp: mkTmp } = await import('node:fs/promises');
+  const fake = await mkTmp(join(tmpdir(), 'fieldrun-home-'));
+
+  // A .codex tree with two rollout files and one unrelated file.
+  await mkdir(join(fake, '.codex', 'sessions', '2026', '09'), { recursive: true });
+  for (const name of ['rollout-a.jsonl', 'rollout-b.jsonl', 'notes.txt']) {
+    await writeFile(join(fake, '.codex', 'sessions', '2026', '09', name), 'x');
+  }
+
+  const realHome = process.env.HOME;
+  process.env.HOME = fake;
+  try {
+    // homedir() reads HOME on POSIX, so this exercises the real lookup path.
+    const { detectAgents, agentRoot } = await import(`../lib/fieldrun.mjs?home=${encodeURIComponent(fake)}`);
+    assert.equal(agentRoot('.codex'), join(fake, '.codex'));
+    assert.equal(agentRoot('.nonesuch'), null);
+
+    const agents = await detectAgents();
+    const codex = agents.find((a) => a.agent === 'Codex');
+    assert.ok(codex, 'Codex should be found');
+    assert.equal(codex.sessions, 2, 'only rollout-*.jsonl counts');
+    assert.equal(typeof codex.daysSinceLastUsed, 'number');
+    assert.ok(!agents.some((a) => a.agent === 'Cursor'), 'absent agents are omitted');
+  } finally {
+    process.env.HOME = realHome;
+  }
+});
+
+test('the fingerprint never carries conversation contents', async () => {
+  const env = await m.captureEnvironment();
+  assert.ok(Array.isArray(env.extra.agents));
+  // Every field is a name, a count or a date — never anything a user wrote.
+  for (const a of env.extra.agents) {
+    assert.equal(typeof a.agent, 'string');
+    assert.equal(typeof a.sessions, 'number');
+    for (const p of a.skills?.plugins ?? []) {
+      assert.deepEqual(Object.keys(p).sort(), ['enabled', 'id', 'installedAt', 'version']);
+    }
+  }
+});

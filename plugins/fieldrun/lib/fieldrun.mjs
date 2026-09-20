@@ -9,7 +9,7 @@ import { homedir } from 'node:os';
 import os from 'node:os';
 import { join } from 'node:path';
 import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -104,6 +104,118 @@ export const submitRun = (runId, payload) =>
 /// What the claim page shows. Useful for re-reading a submitted run's status.
 export const getRun = (runId) => api('GET', `/runs/pending/${runId}`);
 
+// ---- Agents on this machine -----------------------------------------------
+
+/**
+ * Where an agent keeps its state.
+ *
+ * `$HOME` first, then `~/Downloads`, which is where a restored backup lands —
+ * a practitioner who has migrated machines still has the history, just not in
+ * the live location.
+ */
+export function agentRoot(dotname) {
+  for (const base of [homedir(), join(homedir(), 'Downloads')]) {
+    const path = join(base, dotname);
+    if (existsSync(path)) return path;
+  }
+  return null;
+}
+
+/// Agents worth looking for, and where each keeps its sessions. Adding one is a
+/// row here; nothing else in the file knows the list.
+const AGENTS = [
+  { name: 'Claude Code', dot: '.claude', sessions: ['projects'], match: (n) => n.endsWith('.jsonl') },
+  { name: 'Codex', dot: '.codex', sessions: ['sessions'], match: (n) => n.startsWith('rollout-') && n.endsWith('.jsonl') },
+  { name: 'Cursor', dot: '.cursor', sessions: ['projects'], match: (n) => n.endsWith('.jsonl') },
+  { name: 'Grok', dot: '.grok', sessions: [''], match: (n) => n.endsWith('.jsonl') },
+  { name: 'Pi', dot: '.pi', sessions: [''], match: (n) => n.endsWith('.jsonl') },
+  { name: 'OpenCode', dot: '.opencode', sessions: [''], match: (n) => n.endsWith('.jsonl') },
+  { name: 'OpenClaw', dot: '.openclaw', sessions: [''], match: (n) => n.endsWith('.jsonl') },
+  { name: 'Hermes', dot: '.hermes', sessions: [''], match: (n) => n.endsWith('.jsonl') },
+];
+
+/// Depth-limited so a symlink into a huge tree cannot turn environment capture
+/// into a full-disk walk.
+async function findFiles(dir, match, depth = 0, out = []) {
+  if (depth > 4) return out;
+  let entries = [];
+  try { entries = await readdir(dir, { withFileTypes: true }); } catch { return out; }
+  for (const entry of entries) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) await findFiles(path, match, depth + 1, out);
+    else if (match(entry.name)) out.push(path);
+  }
+  return out;
+}
+
+function newestMtime(files) {
+  let newest = 0;
+  for (const file of files) {
+    try {
+      const time = statSync(file).mtime.getTime();
+      if (time > newest) newest = time;
+    } catch {
+      // A file that vanished between listing and stat is not worth failing over.
+    }
+  }
+  return newest;
+}
+
+function readJsonSync(path) {
+  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+}
+
+/**
+ * Claude Code's skills, from the three places they actually come from:
+ * marketplace plugins, which of those are enabled, and configured MCP servers.
+ */
+function claudeSkills(root) {
+  const installed = readJsonSync(join(root, 'plugins', 'installed_plugins.json'));
+  const settings = readJsonSync(join(root, 'settings.json')) ?? {};
+  const enabled = Object.keys(settings.enabledPlugins ?? {});
+  return {
+    plugins: Object.entries(installed?.plugins ?? {}).map(([id, versions]) => ({
+      id,
+      version: versions?.[0]?.version ?? null,
+      installedAt: versions?.[0]?.installedAt ?? null,
+      enabled: enabled.includes(id),
+    })),
+    mcpServers: Object.keys(readJsonSync(join(homedir(), '.claude.json'))?.mcpServers ?? {}).length,
+  };
+}
+
+/**
+ * Which agents are installed, how heavily each is used, and when each was last
+ * touched.
+ *
+ * This is the field a cloud VM cannot produce and the one a practitioner cannot
+ * reliably report: people misremember which tools they still use, and "last
+ * used" settles it from the agent's own session files. Only file names and
+ * modification times are read — never the contents of a conversation.
+ */
+export async function detectAgents() {
+  const found = [];
+  for (const agent of AGENTS) {
+    const root = agentRoot(agent.dot);
+    if (!root) continue;
+
+    const files = [];
+    for (const sub of agent.sessions) {
+      files.push(...await findFiles(sub ? join(root, sub) : root, agent.match));
+    }
+    const newest = newestMtime(files);
+
+    found.push({
+      agent: agent.name,
+      sessions: files.length,
+      lastUsed: newest ? new Date(newest).toISOString().slice(0, 10) : null,
+      daysSinceLastUsed: newest ? Math.floor((Date.now() - newest) / 86_400_000) : null,
+      ...(agent.dot === '.claude' ? { skills: claudeSkills(root) } : {}),
+    });
+  }
+  return found;
+}
+
 // ---- Environment ----------------------------------------------------------
 
 async function version(command, args) {
@@ -121,14 +233,16 @@ async function version(command, args) {
  * This is the part a cloud VM cannot give you, so it is captured by the machine
  * rather than typed by the person: a practitioner asked to describe their setup
  * reports the version they believe they are on, which is frequently not the one
- * that is running.
+ * that is running. The same goes double for which agents they still use — see
+ * detectAgents, whose last-used dates settle what memory only guesses at.
  */
 export async function captureEnvironment() {
-  const [python, uv, git, npm] = await Promise.all([
+  const [python, uv, git, npm, agents] = await Promise.all([
     version('python3', ['--version']),
     version('uv', ['--version']),
     version('git', ['--version']),
     version('npm', ['--version']),
+    detectAgents(),
   ]);
 
   return {
@@ -140,7 +254,8 @@ export async function captureEnvironment() {
       platform: process.platform,
       arch: process.arch,
       python, uv, git, npm,
-      mcpServers: await countMcpServers(),
+      agents,
+      mcpServers: agents.find((a) => a.agent === 'Claude Code')?.skills.mcpServers ?? 0,
       capturedAt: new Date().toISOString(),
     },
   };
@@ -153,33 +268,6 @@ function detectAgent() {
   if (process.env.CURSOR_TRACE_ID) return 'cursor';
   if (process.env.TERM_PROGRAM) return process.env.TERM_PROGRAM;
   return null;
-}
-
-/**
- * How many MCP servers are already registered.
- *
- * This single number is the one most likely to explain a result: a tool-name
- * collision only happens on a machine that already has other servers, and that
- * is precisely the machine we cannot reproduce in CI. Counting is enough — we
- * never read what those servers are or what they connect to.
- */
-async function countMcpServers() {
-  const candidates = [
-    join(homedir(), '.claude.json'),
-    join(homedir(), '.claude', 'settings.json'),
-    join(homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json'),
-  ];
-  let total = 0;
-  for (const path of candidates) {
-    if (!existsSync(path)) continue;
-    try {
-      const parsed = JSON.parse(await readFile(path, 'utf8'));
-      total += Object.keys(parsed.mcpServers ?? {}).length;
-    } catch {
-      // A config we cannot parse is not a failure worth stopping the run over.
-    }
-  }
-  return total;
 }
 
 // ---- Run directory --------------------------------------------------------

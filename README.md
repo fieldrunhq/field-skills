@@ -52,14 +52,24 @@ before it writes anything or shows you the prompt.
 ## Why the machine captures the environment
 
 `captureEnvironment()` reads the OS and release, the Node version, the shell,
-the host agent, and a **count** of the MCP servers already configured. It does
-not ask the practitioner, because people report the version they believe they
-are on, which is frequently not the one executing.
+the host agent, and an **inventory of the AI agents installed on the machine**:
+which are present, how many sessions each has, when each was last used, and the
+names and versions of the Claude Code plugins configured.
 
-The MCP server count is the single field most likely to explain a result: a
-tool-name collision only happens on a machine that already has other servers,
-and that is exactly the machine nobody can reproduce in CI. Only the count is
-read — never what those servers are or what they connect to.
+It does not ask the practitioner any of this. People report the tool they
+believe they are on and the version they believe they have, which is frequently
+not the one executing — and they are worse still at remembering what they have
+stopped using. A last-used date settles that; memory does not.
+
+Only file names, counts and modification times are read. No conversation
+contents are ever opened, and the walk is depth-limited so a symlink cannot turn
+environment capture into a full-disk scan.
+
+The inventory **names** installed plugins, which is a real disclosure — a plugin
+name can say what someone is working on. That is the default because an
+inventory of anonymous counts is worth very little, but `review-fieldrun` shows
+the list and lets the practitioner cut anything they would rather not send, and
+`submit-fieldrun` shows the whole payload before it goes.
 
 ## Configuration
 

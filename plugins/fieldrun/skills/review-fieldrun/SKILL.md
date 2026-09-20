@@ -23,7 +23,8 @@ For the chosen run, show:
 
 - the job title and brief from `job.json`,
 - the run status from `run.json`,
-- the captured fingerprint from `environment.json`,
+- the captured fingerprint from `environment.json`, including the agent
+  inventory: which agents are installed, session counts, and last-used dates,
 - the notes from `NOTES.md`.
 
 ### 3. Check for anything private
@@ -32,6 +33,11 @@ This is the point of the skill. What a practitioner writes while debugging on
 their own machine routinely contains things they would not choose to send:
 
 - absolute paths carrying their real name (`/Users/jane.doe/...`),
+- the captured agent inventory in `environment.json`, which **names** the
+  plugins and skills installed on the machine. A plugin name can say what
+  someone is working on or who they work for. Show the list and ask — naming is
+  the default because an inventory of anonymous counts is worth little, but it
+  is the user's call, not ours,
 - API keys, tokens, connection strings pasted from a terminal,
 - client or employer names, internal hostnames, ticket URLs,
 - other people's names in copied output.

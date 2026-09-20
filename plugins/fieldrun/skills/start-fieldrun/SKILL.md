@@ -54,7 +54,14 @@ prompt. The run id simply expires unused.
 
 ### 3. Write the run directory
 
-Only after the user has said yes. Everything for every job lives under one root,
+Only after the user has said yes.
+
+**Use the run id and prompt you already have from step 1. Do not call
+`startRun` again.** A second call mints a second run, and the id you show the
+user then disagrees with the one written to disk — the first thing this skill
+got wrong in real use.
+
+Everything for every job lives under one root,
 `~/fieldruns`, one folder per code. Create `~/fieldruns/<CODE>/` and write:
 
 | File | Contents |
@@ -69,19 +76,40 @@ Capture the environment with `captureEnvironment()` rather than asking the user
 what they are running. People report the version they believe they are on, which
 is often not the one that is actually executing.
 
-### 4. Hand over
+### 4. Do the work the machine can do
+
+Read what can be read. A practitioner asked to describe their own setup reports
+what they believe is installed, which is frequently not what is; `captureEnvironment()`
+already returns which agents are present, how many sessions each has and when
+each was last used, and a job asking about the machine should be answered from
+that rather than from memory.
+
+So: gather every fact the machine can answer, write it into `NOTES.md` clearly
+marked as captured, and leave the rest blank for the user. What stays theirs is
+judgment, history and friction — which tools they have actually abandoned and
+why, what they had to guess, where they hesitated. Those are the findings worth
+paying for, and they cannot be read off a disk.
+
+Never present a captured fact as something the user observed, and never fill in
+their half. An invented observation is worse than a missing one: the customer
+cannot tell the difference, and the whole product rests on them being able to
+trust that a reported experience was someone's.
+
+If the job asks for something to be **run** — install this, try that command —
+run it here, on this machine. That is the point of Fieldrun: the agent working
+in a real environment is the field test. Stop and ask before anything
+destructive, anything that touches credentials, or anything that changes state
+the user would not expect a job to change.
+
+### 5. Hand over
 
 Tell the user:
 
 - where the run directory is,
-- that `PROMPT.md` holds the task,
-- that they should record what happened in `NOTES.md` as they go — especially
-  anything they had to guess, work around, or read twice,
+- what you captured and what you left for them,
+- that they should record what happened in `NOTES.md` — especially anything they
+  had to guess, work around, or read twice,
 - that `/submit-fieldrun <CODE>` sends it back when they are done.
-
-Then **stop**. Do not run the prompt for them. The deliverable is what a
-practitioner observes on their own machine; an agent executing the task instead
-produces a result about this session, not about their environment.
 
 ## Configuration
 
@@ -98,4 +126,7 @@ these endpoints are public. Say so rather than asking the user for a token.
   None of these skills use one.
 - Never show the prompt or write the run directory before the user has accepted.
 - Never write the run directory anywhere but `~/fieldruns/<CODE>/`.
-- Never run the job's prompt yourself.
+- Never write an observation the user did not make, or fill in the judgment
+  half of `NOTES.md` on their behalf.
+- Never run anything destructive, credential-touching, or state-changing beyond
+  what the job plainly asks for, without asking first.
