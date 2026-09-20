@@ -14,7 +14,7 @@ it does, every time.
 
 ### 1. Load the run
 
-Read `~/fieldruns/<CODE>/` — `run.json` for the run id, `NOTES.md` for the
+Read `~/.fieldruns/<CODE>/` — `run.json` for the run id, `NOTES.md` for the
 observations, `environment.json` for the fingerprint.
 
 - No directory for that code: nothing to submit, point at `/start-fieldrun`.

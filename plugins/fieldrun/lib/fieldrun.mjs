@@ -1,9 +1,13 @@
 // Shared helpers for the three Fieldrun skills.
 //
-// Every run lives under ONE well-known directory — ~/fieldruns — with one
+// Every run lives under ONE well-known directory — ~/.fieldruns — with one
 // folder per job code. A practitioner accumulates runs over time, and scattering
 // them through whatever directory they happened to be in when they started is
 // how work gets lost. One root, one folder per code, always the same shape.
+//
+// Dotted, because this is the plugin's own storage rather than something the
+// user curates, and a visible ~/fieldruns in the home directory is clutter they
+// never asked for.
 
 import { homedir } from 'node:os';
 import os from 'node:os';
@@ -15,7 +19,7 @@ import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 
-export const FIELDRUNS_DIRNAME = 'fieldruns';
+export const FIELDRUNS_DIRNAME = '.fieldruns';
 
 /// The single root every run is stored under. FIELDRUN_HOME overrides it, which
 /// is what the tests use so they never touch a real practitioner's directory.

@@ -13,7 +13,7 @@ Three Claude Code skills for running Fieldrun field jobs on your own machine.
 ## Every run lives in one place
 
 ```
-~/fieldruns/
+~/.fieldruns/
   HFDJQXPC5I/
     job.json            title, brief, reward, started timestamp
     run.json            run id, status, and your claim URL once submitted
@@ -76,7 +76,7 @@ the list and lets the practitioner cut anything they would rather not send, and
 | Variable | Meaning |
 | --- | --- |
 | `FIELDRUN_API_URL` | API host. Defaults to production — see below |
-| `FIELDRUN_HOME` | Overrides `~/fieldruns` |
+| `FIELDRUN_HOME` | Overrides `~/.fieldruns` |
 
 There is no token and no credentials file. Both variables above exist for
 development; a practitioner sets neither.

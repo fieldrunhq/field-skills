@@ -1,6 +1,6 @@
 ---
 name: review-fieldrun
-description: Review a completed Fieldrun run locally before it is submitted — read the notes, inspect the captured environment, and remove anything private. Use when the user wants to check, edit, clean up or inspect a field run, or asks what runs are on this machine. Operates on ~/fieldruns/<CODE>/ and never uploads anything.
+description: Review a completed Fieldrun run locally before it is submitted — read the notes, inspect the captured environment, and remove anything private. Use when the user wants to check, edit, clean up or inspect a field run, or asks what runs are on this machine. Operates on ~/.fieldruns/<CODE>/ and never uploads anything.
 ---
 
 # Review Fieldrun

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 // Point the library at a scratch root before importing it, so no test ever
-// reads or writes a real practitioner's ~/fieldruns.
+// reads or writes a real practitioner's ~/.fieldruns.
 const ROOT = await mkdtemp(join(tmpdir(), 'fieldrun-test-'));
 process.env.FIELDRUN_HOME = ROOT;
 
@@ -14,6 +14,20 @@ const m = await import('../lib/fieldrun.mjs');
 test('every run lives under the one configured root', () => {
   assert.equal(m.fieldrunsRoot(), ROOT);
   assert.equal(m.runDir('hfdjqxpc5i'), join(ROOT, 'HFDJQXPC5I'));
+});
+
+// The root is the plugin's own storage, not something the user curates, so it
+// is hidden. Pinned because changing it silently strands every existing run.
+test('the run root is dotted', async () => {
+  assert.equal(m.FIELDRUNS_DIRNAME, '.fieldruns');
+  const realHome = process.env.FIELDRUN_HOME;
+  delete process.env.FIELDRUN_HOME;
+  try {
+    const fresh = await import(`../lib/fieldrun.mjs?dotted=${Date.now()}`);
+    assert.ok(fresh.fieldrunsRoot().endsWith('/.fieldruns'), fresh.fieldrunsRoot());
+  } finally {
+    process.env.FIELDRUN_HOME = realHome;
+  }
 });
 
 test('the run directory is named by the normalized code', () => {

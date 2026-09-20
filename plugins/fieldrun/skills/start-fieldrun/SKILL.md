@@ -1,6 +1,6 @@
 ---
 name: start-fieldrun
-description: Start a Fieldrun field job on this machine from its ten-character job code. Use when the user wants to begin, accept or run a Fieldrun job, or gives a job code such as HFDJQXPC5I. The job code is required — ask for it if the user did not provide one. No account or token is needed. Shows the brief and gets explicit consent before setting the job up, captures the environment fingerprint, and writes everything to ~/fieldruns/<CODE>/.
+description: Start a Fieldrun field job on this machine from its ten-character job code. Use when the user wants to begin, accept or run a Fieldrun job, or gives a job code such as HFDJQXPC5I. The job code is required — ask for it if the user did not provide one. No account or token is needed. Shows the brief and gets explicit consent before setting the job up, captures the environment fingerprint, and writes everything to ~/.fieldruns/<CODE>/.
 ---
 
 # Start Fieldrun
@@ -62,7 +62,7 @@ user then disagrees with the one written to disk — the first thing this skill
 got wrong in real use.
 
 Everything for every job lives under one root,
-`~/fieldruns`, one folder per code. Create `~/fieldruns/<CODE>/` and write:
+`~/.fieldruns`, one folder per code. Create `~/.fieldruns/<CODE>/` and write:
 
 | File | Contents |
 | --- | --- |
@@ -125,7 +125,7 @@ these endpoints are public. Say so rather than asking the user for a token.
 - Never ask the user to sign in, create a token, or write a credentials file.
   None of these skills use one.
 - Never show the prompt or write the run directory before the user has accepted.
-- Never write the run directory anywhere but `~/fieldruns/<CODE>/`.
+- Never write the run directory anywhere but `~/.fieldruns/<CODE>/`.
 - Never write an observation the user did not make, or fill in the judgment
   half of `NOTES.md` on their behalf.
 - Never run anything destructive, credential-touching, or state-changing beyond
