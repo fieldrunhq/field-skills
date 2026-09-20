@@ -4,9 +4,9 @@ Three Claude Code skills for running Fieldrun field jobs on your own machine.
 
 | Skill | Does |
 | --- | --- |
-| `/start-fieldrun <CODE>` | Looks up a job, shows the brief, claims it on your say-so, captures the environment, writes the run directory |
+| `/start-fieldrun <CODE>` | Starts a job, shows the brief, sets it up on your say-so, captures the environment, writes the run directory |
 | `/review-fieldrun [CODE]` | Reads a run back to you and strips anything private. Never uploads |
-| `/submit-fieldrun <CODE>` | Shows exactly what will be sent, then submits it |
+| `/submit-fieldrun <CODE>` | Shows exactly what will be sent, submits it, and hands back your claim link |
 
 `start-fieldrun` **requires a job code** — ten characters such as `HFDJQXPC5I`.
 
@@ -15,8 +15,8 @@ Three Claude Code skills for running Fieldrun field jobs on your own machine.
 ```
 ~/fieldruns/
   HFDJQXPC5I/
-    job.json            title, brief, reward, claimed timestamp
-    run.json            run id and status
+    job.json            title, brief, reward, started timestamp
+    run.json            run id, status, and your claim URL once submitted
     PROMPT.md           the task, verbatim
     environment.json    the captured fingerprint
     NOTES.md            what you observed
@@ -28,17 +28,26 @@ One root, one folder per job code, always the same shape. A practitioner builds
 up runs over months, and scattering them through whatever directory they
 happened to be in is how work gets lost. `FIELDRUN_HOME` overrides the root.
 
-## The order matters
+## No account, no token, nothing to configure
+
+Install the plugin and run a job. That is the whole setup.
 
 ```
-GET  /run/:id          → title, brief, reward        (no prompt)
-  ↓ the user reads the brief and says yes
-POST /run/:code/claim  → the run, and the prompt
+POST /runs/pending/start        → run id, brief, prompt
+  ↓ you read the brief and say yes; the run directory is written
+POST /runs/pending/:id/submit   → your claim URL
+  ↓ open it and sign in
 ```
 
-The prompt only arrives with the claim. Consent comes before instructions, and
-the skill never claims on the user's behalf — claiming consumes a slot, is
-one-per-person-per-job, and cannot be undone from here.
+None of that needs a credential. You should be able to do a job and see what
+the work is like before deciding to have anything to do with us — the account
+is only needed to be *paid*, so that is the one place it is asked for: the
+claim link you get after submitting. Keep that link; it is the only way to
+claim the run, and it expires after two weeks.
+
+Starting a job reserves nothing. No slot is consumed and no commitment is made,
+so reading a brief and walking away costs the job nothing. The skill still asks
+before it writes anything or shows you the prompt.
 
 ## Why the machine captures the environment
 
@@ -57,11 +66,10 @@ read — never what those servers are or what they connect to.
 | Variable | Meaning |
 | --- | --- |
 | `FIELDRUN_API_URL` | API host. Defaults to production — see below |
-| `FIELDRUN_TOKEN` | Machine token. Overrides `~/.fieldrun/credentials.json` |
 | `FIELDRUN_HOME` | Overrides `~/fieldruns` |
 
-The token is read from the environment on purpose: it must never be written into
-the run directory, because that directory is what gets handed back to Fieldrun.
+There is no token and no credentials file. Both variables above exist for
+development; a practitioner sets neither.
 
 ### Environments
 
