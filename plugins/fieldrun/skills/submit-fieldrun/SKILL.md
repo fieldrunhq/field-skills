@@ -39,8 +39,10 @@ guess here becomes a wrong number in front of a customer.
 
 ### 3. Show exactly what will be sent, then ask
 
-Print the full payload: outcome, notes, and every field of the environment
-fingerprint. Then ask for explicit confirmation.
+Print the full payload: the outcome, `NOTES.md` in full, and every field of the
+environment fingerprint. In full — a summary is not something a user can consent
+to, because the thing they would object to is exactly what a summary drops. Then
+ask for explicit confirmation.
 
 The user must be able to see the fingerprint before it goes. It includes their
 OS and release, runtime and shell, and the agent inventory — which agents are

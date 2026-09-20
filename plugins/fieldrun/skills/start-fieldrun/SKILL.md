@@ -101,32 +101,38 @@ in a real environment is the field test. Stop and ask before anything
 destructive, anything that touches credentials, or anything that changes state
 the user would not expect a job to change.
 
-### 5. Hand over, and say what happens next
+### 5. Show the output, then say what happens next
 
-Tell the user where the run directory is, what you captured, and what you left
-for them. Then end with this block, verbatim in shape, with the real code
-substituted. It is fenced so it renders as one visually distinct unit rather
-than dissolving into the paragraph above it:
+**Print `NOTES.md` in full.** Not a summary, not a path — the actual content, so
+the user can see what was captured and what is still blank. A file they have not
+read is a file they will not finish, and "it's in the run directory" is how a run
+gets abandoned. Show what you captured and show the sections left for them.
+
+Then end with this block, verbatim in shape, with the real code substituted. It
+is fenced so it renders as one visually distinct unit rather than dissolving into
+the paragraph above it:
 
 ```
   NEXT  ─────────────────────────────────────────────────────────
 
-  →  Do the work, and write what happened in NOTES.md
-     ~/.fieldruns/<CODE>/NOTES.md
+  →  /submit-fieldrun <CODE>     send it, and get your claim link
 
-     /review-fieldrun <CODE>    check it over before it leaves the machine
-     /submit-fieldrun <CODE>    send it, and get your claim link
+     Fill in the blank sections of NOTES.md first — that is the part
+     worth paying for. /review-fieldrun <CODE> checks it over for
+     anything private before it leaves the machine.
 
   ────────────────────────────────────────────────────────────────
 ```
 
-The `→` marks the one thing to do now. Only ever one arrow: a list of three
-equally-weighted options is the same as no guidance at all, and the whole point
-of the block is that someone skimming knows what to type next.
+Submit is the arrow. Review is worth doing and is worth mentioning, but it is an
+optional safety step, and a run that never gets submitted is worth nothing to the
+practitioner, the customer or us. Point at the thing that completes the loop and
+let the careful step sit underneath it.
 
-Never end this skill without that block. A practitioner who has just been handed
-a directory and a task has no idea what the second half of the workflow is
-called, and a run that is done but never submitted is worth nothing to anybody.
+Only ever one arrow: three equally weighted options is the same as no guidance,
+and the whole point of the block is that someone skimming knows what to type.
+
+Never end this skill without showing the output and that block.
 
 ## Configuration
 

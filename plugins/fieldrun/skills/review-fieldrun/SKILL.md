@@ -63,9 +63,11 @@ declaring it ready, confirm:
 where they hesitated, and what they had to look up. Those are the findings a
 cloud VM cannot produce, and they are the reason the run is worth paying for.
 
-### 5. Report, and say what happens next
+### 5. Show the output, report, and say what happens next
 
-Tell the user whether the run is ready and what you changed at their direction.
+**Print `NOTES.md` in full** after any edits, so the user sees exactly what the
+run now says rather than a description of it. Then tell them whether it is ready
+and what you changed at their direction.
 Then end with this block, with the real code substituted and the `→` on whichever
 line is actually next:
 
