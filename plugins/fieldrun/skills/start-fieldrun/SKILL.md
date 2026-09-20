@@ -94,8 +94,12 @@ nothing on a machine that is full of it:
   one of those directory names begins with `-`. A shell `find projects/* -name
   '*.jsonl'` reads that as a flag and fails or returns nothing.
 
-Both have already produced a run reporting "no session history" for a machine
-with 31 sessions across 8 projects. If you find yourself about to write that
+Codex is different again — it partitions by date, not by project, so its
+projects can only come from inside each rollout file. `captureEnvironment()`
+handles both.
+
+Both Claude Code traps have already produced a run reporting "no session
+history" for a machine with 31 sessions across 8 projects. If you find yourself about to write that
 someone has no history, you have hit one of these — use the captured data.
 
 A false negative is worse than a gap. "This practitioner had no sessions" reads

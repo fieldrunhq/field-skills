@@ -140,13 +140,13 @@ const AGENTS = [
 
 /// Depth-limited so a symlink into a huge tree cannot turn environment capture
 /// into a full-disk walk.
-async function findFiles(dir, match, depth = 0, out = []) {
-  if (depth > 4) return out;
+async function findFiles(dir, match, depth = 0, out = [], maxDepth = 4) {
+  if (depth > maxDepth) return out;
   let entries = [];
   try { entries = await readdir(dir, { withFileTypes: true }); } catch { return out; }
   for (const entry of entries) {
     const path = join(dir, entry.name);
-    if (entry.isDirectory()) await findFiles(path, match, depth + 1, out);
+    if (entry.isDirectory()) await findFiles(path, match, depth + 1, out, maxDepth);
     else if (match(entry.name)) out.push(path);
   }
   return out;
@@ -269,6 +269,98 @@ export async function claudeProjects() {
 }
 
 /**
+ * Read just the first line of a file, without loading the rest.
+ *
+ * Codex rollouts are whole conversations and can be megabytes; only the opening
+ * record is wanted. Capped so a file with no newline cannot pull an unbounded
+ * amount into memory.
+ */
+async function firstLine(path, cap = 1_048_576) {
+  const { open } = await import('node:fs/promises');
+  let handle;
+  try {
+    handle = await open(path, 'r');
+    let text = '';
+    const buffer = Buffer.alloc(65_536);
+    while (text.length < cap) {
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length);
+      if (!bytesRead) break;
+      text += buffer.subarray(0, bytesRead).toString('utf8');
+      const newline = text.indexOf('\n');
+      if (newline !== -1) return text.slice(0, newline);
+    }
+    return text.slice(0, cap);
+  } catch {
+    return null;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+}
+
+/**
+ * Per-project session history for Codex.
+ *
+ * Codex partitions by DATE, not by project — `~/.codex/sessions/YYYY/MM/DD/
+ * rollout-<start>-<uuid>.jsonl` — so unlike Claude Code the project cannot be
+ * read off the path. It lives in the rollout's opening record, which is session
+ * metadata: cwd, timestamp, CLI version. Only that first line is read, never a
+ * message.
+ *
+ * Counts and dates only. The cwd is a real path and names employers and
+ * clients, exactly as with Claude Code's directory names.
+ */
+export async function codexProjects() {
+  const root = agentRoot('.codex');
+  if (!root) return { projects: [], version: null };
+
+  // Codex nests sessions under YYYY/MM/DD, three levels deeper than a project
+  // layout, so the default ceiling is not enough.
+  const files = await findFiles(
+    join(root, 'sessions'),
+    (n) => n.startsWith('rollout-') && n.endsWith('.jsonl'),
+    0, [], 6,
+  );
+
+  const byProject = new Map();
+  let version = null;
+  for (const file of files) {
+    const line = await firstLine(file);
+    if (!line) continue;
+    let payload;
+    try { payload = JSON.parse(line)?.payload; } catch { continue; }
+
+    const cwd = typeof payload?.cwd === 'string' && payload.cwd ? payload.cwd : `(unknown:${file})`;
+    // The rollout's own timestamp beats mtime: it is when the session actually
+    // started, not when the file was last touched.
+    const when = Date.parse(payload?.timestamp ?? '') || statSafe(file);
+    if (typeof payload?.cli_version === 'string') version = payload.cli_version;
+
+    const entry = byProject.get(cwd) ?? { sessions: 0, times: [] };
+    entry.sessions += 1;
+    if (when) entry.times.push(when);
+    byProject.set(cwd, entry);
+  }
+
+  const projects = [...byProject.values()]
+    .filter((e) => e.times.length)
+    .map((e) => {
+      e.times.sort((a, b) => a - b);
+      return {
+        sessions: e.sessions,
+        firstUsed: new Date(e.times[0]).toISOString().slice(0, 10),
+        lastUsed: new Date(e.times[e.times.length - 1]).toISOString().slice(0, 10),
+      };
+    })
+    .sort((a, b) => b.sessions - a.sessions);
+
+  return { projects, version };
+}
+
+function statSafe(file) {
+  try { return statSync(file).mtime.getTime(); } catch { return 0; }
+}
+
+/**
  * Subagents configured on this machine.
  *
  * "Agent" means two different things and an inventory that reports only the
@@ -356,6 +448,7 @@ export async function detectAgents() {
       ...(agent.dot === '.claude'
         ? { skills: claudeSkills(root), projects: await claudeProjects() }
         : {}),
+      ...(agent.dot === '.codex' ? await codexProjects() : {}),
     });
   }
   return found;

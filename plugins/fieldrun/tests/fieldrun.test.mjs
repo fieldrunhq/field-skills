@@ -258,3 +258,43 @@ test('session history survives the hyphen and ignores the sessions decoy', async
     process.env.HOME = realHome;
   }
 });
+
+// Codex partitions by DATE, not by project, so the project can only come from
+// inside the rollout — and only its opening metadata record, never a message.
+test('codex projects come from the rollout header, not the path', async () => {
+  const { mkdtemp: mkTmp } = await import('node:fs/promises');
+  const fake = await mkTmp(join(tmpdir(), 'fieldrun-codex-'));
+  const day = join(fake, '.codex', 'sessions', '2026', '09', '16');
+  await mkdir(day, { recursive: true });
+
+  const rollout = (cwd, ts, extra = '') =>
+    JSON.stringify({ timestamp: ts, ordinal: 0, type: 'session_meta',
+      payload: { cwd, timestamp: ts, cli_version: '0.154.0' } })
+    + '\n' + JSON.stringify({ type: 'message', payload: { text: `SECRET-${extra}` } }) + '\n';
+
+  await writeFile(join(day, 'rollout-a.jsonl'), rollout('/Users/x/Documents/AcmeCorp', '2026-09-16T10:00:00Z', 'a'));
+  await writeFile(join(day, 'rollout-b.jsonl'), rollout('/Users/x/Documents/AcmeCorp', '2026-09-18T10:00:00Z', 'b'));
+  await writeFile(join(day, 'rollout-c.jsonl'), rollout('/Users/x/Documents/Other', '2026-09-17T10:00:00Z', 'c'));
+  await writeFile(join(day, 'notes.txt'), 'ignored');
+
+  const realHome = process.env.HOME;
+  process.env.HOME = fake;
+  try {
+    const fresh = await import(`../lib/fieldrun.mjs?codex=${Date.now()}`);
+    const { projects, version } = await fresh.codexProjects();
+
+    assert.equal(version, '0.154.0');
+    assert.equal(projects.length, 2, 'grouped by cwd, not by file or by day');
+    assert.equal(projects[0].sessions, 2, 'busiest first');
+    // Dates come from the rollout's own timestamp, not the file's mtime, which
+    // would be "now" for a fixture written a moment ago.
+    assert.equal(projects[0].firstUsed, '2026-09-16');
+    assert.equal(projects[0].lastUsed, '2026-09-18');
+
+    const serialized = JSON.stringify(projects);
+    assert.ok(!/AcmeCorp|Users|Other/.test(serialized), 'paths must not be captured');
+    assert.ok(!/SECRET/.test(serialized), 'message content must never be read');
+  } finally {
+    process.env.HOME = realHome;
+  }
+});

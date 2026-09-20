@@ -69,16 +69,28 @@ believe they are on and the version they believe they have, which is frequently
 not the one executing — and they are worse still at remembering what they have
 stopped using. A last-used date settles that; memory does not.
 
-For Claude Code it also reports **per-project session counts and date ranges** —
+For Claude Code and Codex it also reports **per-project session counts and date
+ranges** —
 how many projects someone has going, how the work is spread across them, and how
 recently each was touched. Counts and dates only, never the directory names:
 those decode back to real paths and name employers, clients and unreleased work.
 
-Two traps make this worth doing in one place rather than per job, and both have
-produced a run that reported no history for a machine with 31 sessions:
-`~/.claude/sessions/` is session keys, not transcripts, and the real transcript
-directories are all named after the launch cwd with separators hyphenated, so
-they begin with `-` and break shell globbing.
+The two agents store this completely differently, which is the argument for
+doing it in one tested place rather than per job:
+
+| | Claude Code | Codex |
+| --- | --- | --- |
+| Layout | `projects/<launch-cwd>/*.jsonl` | `sessions/YYYY/MM/DD/rollout-*.jsonl` |
+| Project from | the directory name | the rollout's opening record |
+| Dates from | file mtime | the session's own timestamp |
+
+And Claude Code has two traps that have already produced a run reporting no
+history for a machine with 31 sessions: `~/.claude/sessions/` is session keys
+rather than transcripts, and every real transcript directory is the launch cwd
+with separators hyphenated, so it begins with `-` and breaks shell globbing.
+
+For Codex only the first line of a rollout is read — session metadata, carrying
+the cwd, the start time and the CLI version. Never a message.
 
 Only file names, counts and modification times are read. No conversation
 contents are ever opened, and the walk is depth-limited so a symlink cannot turn
