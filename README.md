@@ -69,6 +69,18 @@ believe they are on and the version they believe they have, which is frequently
 not the one executing — and they are worse still at remembering what they have
 stopped using. A last-used date settles that; memory does not.
 
+It reports **what was actually used**, not only what is installed: every skill
+invoked, every subagent spawned and every MCP server called, with counts and
+last-used dates. The two are different questions, and the gap between them is
+frequently the finding — installed-and-never-run is invisible to a practitioner
+asked to describe their own setup.
+
+Transcripts are read structurally for this: each line is parsed as JSON, and
+only tool-use records are inspected — the tool's name, plus the single argument
+naming which skill or subagent. Message text, tool results, Bash commands, file
+contents and every other tool's arguments are never read. A test pins that with
+a fixture full of markers.
+
 For Claude Code and Codex it also reports **per-project session counts and date
 ranges** —
 how many projects someone has going, how the work is spread across them, and how

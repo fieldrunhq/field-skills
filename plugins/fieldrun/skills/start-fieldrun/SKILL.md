@@ -84,6 +84,21 @@ already returns which agents are present, how many sessions each has and when
 each was last used, and a job asking about the machine should be answered from
 that rather than from memory.
 
+**"Which do you actually use" is a question the machine answers, not the
+practitioner.** `captureEnvironment()` returns `extra.usage`: every skill
+invoked, every subagent spawned and every MCP server called, with counts and
+last-used dates, read from the session transcripts. Installed and used are
+different questions and the gap between them is often the whole finding — on the
+machine this was written on, five hand-built subagents were installed and
+invoked zero times, while the two actually used were built-ins nobody would have
+thought to mention.
+
+So never ask the user to list what they use. They will answer from memory, name
+the tools they built rather than the ones they run, and the run becomes a
+self-report — which is the one thing a Fieldrun result is supposed not to be.
+Ask them only for what no file records: why they dropped something, what they
+expected, where they got stuck.
+
 **Never go looking for session history by hand.** `captureEnvironment()` already
 returns it, per project, and two traps make a manual search reliably report
 nothing on a machine that is full of it:

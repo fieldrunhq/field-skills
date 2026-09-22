@@ -298,3 +298,50 @@ test('codex projects come from the rollout header, not the path', async () => {
     process.env.HOME = realHome;
   }
 });
+
+// Usage is the field that was missing: a job asking which subagents someone
+// ACTUALLY uses had only what was installed, so the agent handed the question
+// back to the practitioner — who would answer from memory, which is the error
+// this product exists to remove.
+test('usage history counts invocations, not installations', async () => {
+  const { mkdtemp: mkTmp } = await import('node:fs/promises');
+  const fake = await mkTmp(join(tmpdir(), 'fieldrun-usage-'));
+  const project = join(fake, '.claude', 'projects', '-Users-x-work');
+  await mkdir(project, { recursive: true });
+
+  const toolUse = (name, input) => JSON.stringify({
+    type: 'assistant',
+    message: { content: [{ type: 'tool_use', name, input }] },
+  });
+
+  await writeFile(join(project, 'a.jsonl'), [
+    toolUse('Skill', { skill: 'dataviz', args: 'SECRET-ARGS' }),
+    toolUse('Task', { subagent_type: 'Explore', prompt: 'SECRET-PROMPT' }),
+    toolUse('Task', { subagent_type: 'Explore', prompt: 'SECRET-PROMPT-2' }),
+    toolUse('mcp__claude_ai_Slack__send', { text: 'SECRET-MESSAGE' }),
+    toolUse('Bash', { command: 'cat SECRET-FILE' }),
+    JSON.stringify({ type: 'user', message: { content: [{ type: 'text', text: 'SECRET-TEXT' }] } }),
+    JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_result', content: 'SECRET-RESULT' }] } }),
+  ].join('\n'));
+
+  const realHome = process.env.HOME;
+  process.env.HOME = fake;
+  try {
+    const fresh = await import(`../lib/fieldrun.mjs?usage=${Date.now()}`);
+    const usage = await fresh.usageHistory();
+
+    assert.equal(usage.sessionsScanned, 1);
+    assert.deepEqual(usage.skills.map((s) => s.name), ['dataviz']);
+    assert.deepEqual(usage.subagents, [{ name: 'Explore', uses: 2, lastUsed: usage.subagents[0].lastUsed }]);
+    assert.deepEqual(usage.mcpServers.map((s) => s.name), ['claude_ai_Slack']);
+
+    // Transcripts are read structurally: tool names, and the one argument that
+    // names a skill or subagent. Nothing a person wrote, no tool results, no
+    // Bash commands, no arguments of any other tool.
+    const serialized = JSON.stringify(usage);
+    assert.ok(!/SECRET/.test(serialized), serialized);
+    assert.ok(!/Bash/.test(serialized), 'other tools are counted by nobody');
+  } finally {
+    process.env.HOME = realHome;
+  }
+});

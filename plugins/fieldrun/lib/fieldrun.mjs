@@ -212,6 +212,79 @@ function decodeProjectDir(name) {
 }
 
 /**
+ * What was actually used, as opposed to what is merely installed.
+ *
+ * This is the field the plugin was missing, and its absence had a real cost: a
+ * job asking "which subagents and skills do you actually use" had no data to
+ * answer from, so the agent handed the question back to the practitioner — who
+ * would have answered from memory, which is the exact error Fieldrun exists to
+ * remove. On the machine this was written on, five hand-built subagents were
+ * installed and invoked zero times across 33 sessions; the ones actually used
+ * were the two built-ins nobody would have thought to mention.
+ *
+ * Transcripts are read STRUCTURALLY. Every line is parsed as JSON and only
+ * tool-use records are looked at: the tool's name, and for Skill and Task the
+ * one argument naming which skill or subagent. Message text, tool results,
+ * Bash commands, file contents and arguments of every other tool are never
+ * touched. A test pins that boundary with a fixture full of markers.
+ */
+export async function usageHistory() {
+  const root = agentRoot('.claude');
+  if (!root) return { skills: [], subagents: [], mcpServers: [], sessionsScanned: 0 };
+
+  const files = await findFiles(join(root, 'projects'), (n) => n.endsWith('.jsonl'));
+  const tally = { skill: new Map(), subagent: new Map(), mcp: new Map() };
+  let scanned = 0;
+
+  const record = (kind, name, day) => {
+    if (!name) return;
+    const seen = tally[kind].get(name) ?? { uses: 0, lastUsed: '' };
+    seen.uses += 1;
+    if (day > seen.lastUsed) seen.lastUsed = day;
+    tally[kind].set(name, seen);
+  };
+
+  for (const file of files) {
+    let text;
+    try { text = readFileSync(file, 'utf8'); } catch { continue; }
+    scanned += 1;
+
+    let day = '';
+    try { day = statSync(file).mtime.toISOString().slice(0, 10); } catch { /* vanished */ }
+
+    for (const line of text.split('\n')) {
+      if (!line || !line.includes('tool_use')) continue;
+      let parsed;
+      try { parsed = JSON.parse(line); } catch { continue; }
+
+      const content = parsed?.message?.content;
+      if (!Array.isArray(content)) continue;
+
+      for (const part of content) {
+        if (part?.type !== 'tool_use') continue;
+        const name = part.name;
+        // Only these three arguments are ever read.
+        if (name === 'Skill') record('skill', part.input?.skill, day);
+        else if (name === 'Task' || name === 'Agent') record('subagent', part.input?.subagent_type ?? 'unspecified', day);
+        else if (typeof name === 'string' && name.startsWith('mcp__')) record('mcp', name.split('__')[1], day);
+      }
+    }
+  }
+
+  // Busiest first: the shape of the list is the finding, not the alphabet.
+  const list = (map) => [...map.entries()]
+    .map(([name, seen]) => ({ name, ...seen }))
+    .sort((a, b) => b.uses - a.uses);
+
+  return {
+    skills: list(tally.skill),
+    subagents: list(tally.subagent),
+    mcpServers: list(tally.mcp),
+    sessionsScanned: scanned,
+  };
+}
+
+/**
  * Per-project session history for Claude Code.
  *
  * Two traps make this reliably report "no sessions" to anyone who looks the
@@ -483,6 +556,7 @@ export async function captureEnvironment() {
     detectAgents(),
   ]);
   const subagents = await detectSubagents();
+  const usage = await usageHistory();
 
   return {
     os: `${os.type()} ${os.release()}`,
@@ -495,6 +569,7 @@ export async function captureEnvironment() {
       python, uv, git, npm,
       agents,
       subagents,
+      usage,
       mcpServers: agents.find((a) => a.agent === 'Claude Code')?.skills.mcpServers ?? 0,
       capturedAt: new Date().toISOString(),
     },
