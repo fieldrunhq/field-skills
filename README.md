@@ -8,7 +8,7 @@ Run `/start-fieldrun <CODE>` and choose a mode. **Automatic** proceeds through t
 2. **Review:** Check missing answers, weak observations, unclear outcomes and private information. Ask for unresolved details and wait. Apply the privacy rules agreed at the start.
 3. **Submit:** When review passes, upload without a second submission confirmation, verify the saved result, and open the claim page.
 
-**Manual** saves the original job prompt, captures the environment, and stops before executing the job. Perform the job and record findings in `NOTES.md`, then run `/review-fieldrun <CODE>` to review locally and `/submit-fieldrun <CODE>` to submit explicitly. Review alone never uploads.
+**Manual** performs the same job and writes the findings into `NOTES.md`, then stops before review and submission. Read the prepared notes, then run `/review-fieldrun <CODE>` to review locally and `/submit-fieldrun <CODE>` to submit explicitly. Review alone never uploads.
 
 Use the same start command to resume with the saved mode. An already-submitted run opens its existing claim link without another upload.
 

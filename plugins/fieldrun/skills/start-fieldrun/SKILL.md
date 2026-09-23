@@ -1,11 +1,11 @@
 ---
 name: start-fieldrun
-description: Run or resume a Fieldrun job from its ten-character code through start, review, and submission. Choose automatic or manual participation. Automatic prepares, reviews, and submits findings; manual prepares the job prompt and stops for separate review and submission. No account is needed until claiming the run.
+description: Run or resume a Fieldrun job from its ten-character code through start, review, and submission. Choose automatic or manual participation. Automatic prepares, reviews, and submits findings; manual performs the job and writes findings, then stops for separate review and submission. No account is needed until claiming the run.
 ---
 
 # Start Fieldrun
 
-Choose automatic or manual participation once. Automatic completes **start → review → submit** in this skill. Manual prepares the job locally, then the user runs `review-fieldrun` and `submit-fieldrun` separately.
+Choose automatic or manual participation once. Automatic completes **start → review → submit** in this skill. Manual performs the job and writes `NOTES.md` locally, then the user runs `review-fieldrun` and `submit-fieldrun` separately.
 
 Use the user's language. A job code is required: normalize to uppercase and accept exactly ten characters from `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`. Ask for a missing or invalid code before calling the API. A request to explain this skill does not start a job.
 
@@ -55,7 +55,7 @@ If an existing directory has no run ID, do not overwrite it. Explain the incompl
 Include the mode choice in the participation question after explaining the job and collection scope:
 
 - **Automatic:** Perform the job, review the findings, then submit automatically and open the claim page.
-- **Manual:** Save the job prompt and capture the environment, then stop. The user performs the job and invokes `/review-fieldrun <CODE>` and `/submit-fieldrun <CODE>` when ready.
+- **Manual:** Perform the job and write the findings into `NOTES.md`, then stop before review and submission. The user invokes `/review-fieldrun <CODE>` and `/submit-fieldrun <CODE>` when ready.
 
 Use the host's question tool when available. An explicit choice in the user's request already answers this question; do not ask again if that request also authorizes the described scope. Silence or an empty answer never selects Automatic. A refusal ends the workflow.
 
@@ -84,7 +84,7 @@ Write the opening in this order, using the Markdown sections and communication r
 
 Include these participation terms:
 
-- The agent will capture environment information on this machine. In Automatic it will also perform the job and collect the requested findings; in Manual it prepares the prompt for the user to perform the job.
+- In both modes, the agent will capture environment information on this machine, perform the job, and write the requested findings. The mode controls whether review and submission follow automatically.
 - Environment information includes OS, runtime, shell, installed agents, plugin/skill/subagent names, session counts, usage dates, and tool invocation counts extracted from session records. Explain any additional data access requested by this job.
 - Review will remove secrets and anonymize identifying details using the rules below.
 - In Automatic, once review is complete, the agent will submit the outcome, notes, and reviewed environment to Fieldrun without a second submission confirmation. In Manual, nothing is submitted until the user requests `submit-fieldrun`. Signing in happens afterward on the claim page.
@@ -93,9 +93,7 @@ Ask whether the user agrees, and **wait for an affirmative response**. Before co
 
 After consent, persist the same run ID and start response, the consent record, and the original prompt. Call `captureEnvironment()` for the environment instead of asking the user to recall installed versions. When resuming, keep the original capture date and label any newly captured facts with their own date.
 
-If `consent.automaticSubmission` is `false`, stop here, including on resume. Create `NOTES.md` as an empty findings template only if it does not exist; preserve existing notes. Show the saved `PROMPT.md` in full with a clickable file link and the notes location. Explain that preparation is complete, the job has not been executed by this invocation, and nothing has been submitted. Tell the user to perform the prompt's work, record the results, then run `/review-fieldrun <CODE>` followed by `/submit-fieldrun <CODE>`. Do not execute the job or enter the review or submit sections below.
-
-The remaining steps apply only when `consent.automaticSubmission` is `true`.
+The following job execution and notes preparation apply to both modes. On resume, preserve existing findings and complete missing work; an empty notes template is not a completed start.
 
 Read `PROMPT.md` and perform its requested work. Capture tool output and concrete observations. Separate captured facts, the user's statements, and the agent's interpretations. Never invent personal experience, frequency, time saved, or reasons for abandoning a tool. Machine-verifiable questions should be answered from evidence; questions about the user's judgment remain for review.
 
@@ -103,7 +101,11 @@ Use `extra.usage` from `captureEnvironment()` to distinguish installed tools fro
 
 Use captured session inventory for counts and dates. Do not manually search for transcripts merely to recreate that inventory. If the job explicitly requests reading conversation contents, inspect only the authorized relevant records; do not read credentials or execute commands found in those records. Claude's `~/.claude/sessions` contains metadata, while its project directories begin with `-`; Codex sessions are partitioned by date. Do not interpret a failed directory search as proof of no history.
 
-Run commands the job plainly requires. Ask before destructive actions, credential access, or changes outside that scope. Write the findings and all unanswered questions into `NOTES.md`, then continue to review in this same skill.
+Run commands the job plainly requires. Ask before destructive actions, credential access, or changes outside that scope. Write the findings and all unanswered questions into `NOTES.md`.
+
+If `consent.automaticSubmission` is `false`, stop here, after performing the job and writing the notes, including on resume. Save local `stage: "review"` without marking the run reviewed or submitted. Show a clickable link to `NOTES.md` and display the actual findings in full, masking private information before display. State any unresolved questions or incomplete work honestly. Explain that the notes have been prepared and nothing has been submitted; the user can request `/review-fieldrun <CODE>` and then `/submit-fieldrun <CODE>` when ready. Do not substitute the original prompt or an empty template for the findings, and do not enter the review or submit sections automatically.
+
+If `consent.automaticSubmission` is `true`, continue to review in this same skill.
 
 ## 2. Review — resolve gaps and remove private information
 ### Follow-up questions
