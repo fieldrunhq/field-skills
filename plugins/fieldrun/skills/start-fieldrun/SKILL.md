@@ -9,6 +9,30 @@ Complete one job through **start → review → submit**. The user invokes this 
 
 Use the user's language. A job code is required: normalize to uppercase and accept exactly ten characters from `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`. Ask for a missing or invalid code before calling the API. A request to explain this skill does not start a job.
 
+## Communication — the conversation must stand on its own
+
+Apply these rules to **every user-facing message**, including consent, progress, evidence summaries, follow-up questions, resumed runs, errors, submission, and account linking. Assume the user is participating for the first time: they do not know Fieldrun, the job, its rules, your tools, or anything you learned from records. They have not read the prompt, notes, drafts, files, or links and may only read your message and answer it. Their earlier participation does not imply that they remember the context of a newly surfaced record.
+
+- Start with what the user needs to understand or decide. Explain the relevant situation before reporting internal processing or asking a question. Prefer ordinary verbs with clear subjects and objects to compressed labels. Say who inspected, changed, reviewed, or will submit what.
+- Introduce Fieldrun as a service where people participate in jobs for rewards. Identify the selected job by its actual title; keep the code as secondary reference information. Explain the agent's work and the user's part in plain language. Do not imply that payment is guaranteed or already approved.
+- Make each question answerable from the message itself. Provide the relevant project or task context, what the user was trying to achieve, the observed action or before/after change, and what the record does and does not establish. Then explain why the missing answer matters to this job and ask for it. Include only the background needed to recognize the event; do not dump transcripts.
+- Use verified public product and model names when they distinguish the choices. Do not substitute vague labels such as “the cheap model,” “the parent model,” “this combination,” or “the question method.” Explain technical terms when needed, such as “the model running the main task.” For private projects use a meaningful anonymized description, not a bare identifier. Follow the privacy rules even when quoting evidence.
+- Never invent a project, date, model, motive, or relationship to make the explanation sound complete. Identify uncertain connections explicitly. If the records cannot identify the event sufficiently, ask whether the user recognizes it before asking them to explain its outcome or motive. Do not treat lack of later records as proof that the user stopped using something.
+- A notes link or file is optional supporting detail, never a prerequisite for answering. Instead of “I saved three change sequences to the review draft,” explain what relevant examples you found, why you are collecting them, and what remains unknown. If mentioning a draft, explain that it holds the findings being prepared for submission and whether it has been submitted.
+- Ask only what evidence cannot answer. Group questions only when each retains enough context; split unrelated or lengthy cases into manageable turns. Give a simple way to answer, allow correction of your reconstruction, and allow “I do not remember” without promising that it satisfies a required deliverable. Explain any resulting limitation using the job's actual requirements.
+- Explain consent or a pause through its practical reason: reading local records, sending information to Fieldrun, or needing a fact only the user can supply. Do not use internal rules, API fields, skill quotations, stage names, or file names as the explanation. If higher-priority host instructions require a rule citation, keep it separate from the plain-language explanation.
+- Be concise by removing repetition, not context. Before sending, read the message as someone who has seen none of your sources: can they tell what this concerns, why it matters, what you know, and exactly what they need to answer or do? If not, supply the missing connection. This check does not authorize extra data access or change consent, privacy, review, or submission requirements.
+
+### Contextual follow-up pattern
+
+Use this structure naturally, not as a form with mandatory headings: **recognizable context → observed facts → missing fact and why it matters → concrete question**. Fill examples only with verified facts; bracketed text below is a writing placeholder, never text to send unchanged.
+
+Poor: “Search procedure/model change: you switched from a low-cost model to the parent model. Did you keep this combination, and why?”
+
+Better: “이번 작업은 AI 사용 방식을 바꾼 뒤 실제로 계속 사용했는지와 그 이유를 정리하는 일입니다. [프로젝트의 목적을 설명하는 익명화된 표현] 관련 기록에서, [검색하려던 내용]을 찾는 일을 별도 AI 작업으로 나누고 검색 모델을 [확인된 모델 A]에서 [확인된 모델 B]로 바꾼 내용을 찾았습니다. 변경 후 검색을 두 번 실행한 기록은 있지만, 이후에도 같은 방식을 썼는지는 확인되지 않습니다. 이 검색 방식을 그 뒤에도 사용하셨나요? 계속 사용하거나 다시 바꾸셨다면 그 이유를 알려주세요. 제가 다른 작업의 기록을 연결했다면 바로잡아 주세요.”
+
+The two executions above are illustrative, not facts about the current user. Apply the same structure to questions about instruction changes, tools, skills, failures, or any other job topic. Do not repeat the full job introduction for every item in one message, but retain each item's recognizable context.
+
 ## Runtime and saved state
 
 Resolve paths from this skill's location, not the shell's working directory. The helper is `lib/fieldrun.mjs` beside this file in a standalone installation, or `../../lib/fieldrun.mjs` in the plugin. Import that file by its resolved absolute path.
@@ -33,9 +57,16 @@ If an existing directory has no run ID, do not overwrite it. Explain the incompl
 
 ## 1. Start — obtain consent and prepare the findings
 
-For a new run, call `startRun(code)` once. Its body contains `runId`, `expiresAt`, `job`, `prompt`, and possibly `sampleOutput`. Starting reserves no slot. Keep the full response in the tool orchestrator’s persistent memory for setup after consent. Print only the run ID, expiry, and job summary before consent. Do not print the raw API response: it contains the prompt, and tool output can expose it even when the final message does not. For example, when using `functions.exec`, retain the full response with `store()` and pass only those public fields to `text()`. After consent, retrieve the same response with `load()`; do not call `startRun` again.
+For a new run, call `startRun(code)` once. Its body contains `runId`, `expiresAt`, `job`, `prompt`, and possibly `sampleOutput`. Starting reserves no slot. Keep the full response in the tool orchestrator’s persistent memory for setup after consent. In tool output before consent, print only the run ID, expiry, and job summary. This limits raw tool output; it is not the user-facing introduction format. Do not print the raw API response: it contains the prompt, and tool output can expose it even when the final message does not. For example, when using `functions.exec`, retain the full response with `store()` and pass only those public fields to `text()`. After consent, retrieve the same response with `load()`; do not call `startRun` again.
 
-Show the job title, brief, reward, and the following participation terms:
+Write the opening in this order, using the communication rules above:
+
+1. Briefly introduce Fieldrun and name the selected job, with its code as a secondary reference. Use the public job brief to explain what the agent will do, which records or resources it will use, and what the user may need to answer. Do not expose the original prompt before consent.
+2. Put the reward and verified deadline in easy-to-scan bullets. Express a deadline as what must be done by an absolute date and time with a timezone, not merely “execution expiry.” Verify what `expiresAt` governs; do not turn an unexplained expiry into an invented submission or payment deadline. If its scope is unclear, state that limitation plainly.
+3. Explain why consent is needed, then describe the access, collection, privacy review, and automatic submission below in ordinary language. Preserve the full collection scope; explain unfamiliar categories rather than hiding them under “environment information.”
+4. End with one explicit question covering that access, collection, privacy handling, and automatic submission. Make clear that the agent reviews the material and that submission will not trigger another approval request.
+
+Include these participation terms:
 
 - The agent will perform the job on this machine and collect the requested findings and environment information.
 - Environment information includes OS, runtime, shell, installed agents, plugin/skill/subagent names, session counts, usage dates, and tool invocation counts extracted from session records. Explain any additional data access requested by this job.
@@ -66,9 +97,9 @@ Compare the notes with every requested answer and deliverable in `PROMPT.md`. Re
 
 Participation consent authorizes these privacy edits without a separate question for each edit. Preserve the meaning and evidence of the findings. If a redaction would change a material finding, or disclosure cannot be resolved by those rules, explain the issue using a masked example and ask the user how to proceed.
 
-Group unresolved questions, save `stage: "review"`, and **wait**. Do not submit while any required question remains unresolved. In delegated execution, report the questions to the parent and await actual answers; the parent must not fabricate observations. Incorporate the answers with their provenance and review again. Elapsed time, a generic “continue,” and silence do not supply missing answers.
+Present unresolved questions using the contextual follow-up pattern above. Explain why these answers are needed to finish this job; do not lead with a count of extracted changes or a saved draft. Save `stage: "review"`, and **wait**. Do not submit while any required question remains unresolved. In delegated execution, report the questions to the parent and await actual answers; the parent must not fabricate observations. Incorporate the answers with their provenance and review again. Elapsed time, a generic “continue,” and silence do not supply missing answers.
 
-When review passes, save the final notes, reviewed environment, and outcome. Display the final `NOTES.md` in full and describe redactions and material limitations. Move directly to submit; do not ask for a second submission confirmation or suggest another skill. If the user limited the request to local preparation or review, respect that limit and stop before uploading.
+When review passes, save the final notes, reviewed environment, and outcome. Introduce the final notes as the findings the agent has reviewed and is about to send to Fieldrun. Summarize what was found in plain language, then display the final `NOTES.md` in full and describe redactions and material limitations. Do not require the user to read or approve the notes to continue. Move directly to submit; do not ask for a second submission confirmation or suggest another skill. If the user limited the request to local preparation or review, respect that limit and stop before uploading.
 
 ## 3. Submit — upload, verify, and open the claim page
 
@@ -87,6 +118,8 @@ Explain that signing in on that page attaches the run to their account, and the 
 For an already-submitted run, reopen the same link without rerunning the job or submitting again.
 
 ### API failures
+
+For every failure, identify the affected job in plain language, explain what did or did not complete, whether findings are preserved, and the next action. Error codes may support the explanation but must not replace it. On resume, briefly restore the job context and distinguish completed work from what remains; preserve valid consent.
 
 - `404 JOB_NOT_FOUND`: The code is unknown or unavailable. Do not try guessed variations.
 - `404 NOT_FOUND`: The saved run ID cannot be found. Preserve the files and explain the problem.
