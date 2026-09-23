@@ -1,14 +1,16 @@
 # field-skills
 
-One skill for completing Fieldrun field jobs on your own machine.
+Run Fieldrun field jobs on your own machine in automatic or manual mode.
 
-Run `/start-fieldrun <CODE>` once. The skill proceeds through three stages:
+Run `/start-fieldrun <CODE>` and choose a mode. **Automatic** proceeds through three stages:
 
 1. **Start:** Show the brief, reward, collection scope and automatic submission terms. Wait for participation consent, then perform the job and prepare findings.
 2. **Review:** Check missing answers, weak observations, unclear outcomes and private information. Ask for unresolved details and wait. Apply the privacy rules agreed at the start.
 3. **Submit:** When review passes, upload without a second submission confirmation, verify the saved result, and open the claim page.
 
-Use the same command to resume a saved run. An already-submitted run opens its existing claim link without another upload. No separate review or submit command is needed.
+**Manual** saves the original job prompt, captures the environment, and stops before executing the job. Perform the job and record findings in `NOTES.md`, then run `/review-fieldrun <CODE>` to review locally and `/submit-fieldrun <CODE>` to submit explicitly. Review alone never uploads.
+
+Use the same start command to resume with the saved mode. An already-submitted run opens its existing claim link without another upload.
 
 `start-fieldrun` **requires a job code** — ten characters such as `HFDJQXPC5I`.
 
@@ -116,7 +118,7 @@ inventory of anonymous counts is worth very little, and the integrated review in
 consent covers removing secrets and anonymizing identifying details. Review
 asks about cases where those rules cannot resolve disclosure without changing
 a material finding. The final notes and a description of redactions are shown
-before automatic submission.
+before automatic submission; manual runs use the separate review and submit commands.
 
 ## Configuration
 
@@ -148,6 +150,8 @@ plugins/fieldrun/
   .claude-plugin/plugin.json
   lib/fieldrun.mjs          paths, API client, environment capture
   skills/start-fieldrun/SKILL.md
+  skills/review-fieldrun/SKILL.md
+  skills/submit-fieldrun/SKILL.md
   tests/fieldrun.test.mjs
 ```
 

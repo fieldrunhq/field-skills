@@ -163,10 +163,10 @@ test('the fingerprint never carries conversation contents', async () => {
   }
 });
 
-test('the plugin exposes one entrypoint', async () => {
+test('the plugin exposes start, review, and submit skills', async () => {
   const { readdir } = await import('node:fs/promises');
   const entries = await readdir(new URL('../skills/', import.meta.url), { withFileTypes: true });
-  assert.deepEqual(entries.filter(e => e.isDirectory()).map(e => e.name), ['start-fieldrun']);
+  assert.deepEqual(entries.filter(e => e.isDirectory()).map(e => e.name).sort(), ['review-fieldrun', 'start-fieldrun', 'submit-fieldrun']);
 });
 
 // "Agent" means the host doing the work AND the subagents defined inside it.

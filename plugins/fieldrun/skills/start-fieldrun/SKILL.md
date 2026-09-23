@@ -1,11 +1,11 @@
 ---
 name: start-fieldrun
-description: Run or resume a Fieldrun job from its ten-character code through start, review, and submission. Get participation consent, prepare the findings, resolve missing answers and private information, then submit automatically and open the claim page. No account is needed until claiming the run.
+description: Run or resume a Fieldrun job from its ten-character code through start, review, and submission. Choose automatic or manual participation. Automatic prepares, reviews, and submits findings; manual prepares the job prompt and stops for separate review and submission. No account is needed until claiming the run.
 ---
 
 # Start Fieldrun
 
-Complete one job through **start → review → submit**. The user invokes this skill once; do not send them to separate review or submit skills.
+Choose automatic or manual participation once. Automatic completes **start → review → submit** in this skill. Manual prepares the job locally, then the user runs `review-fieldrun` and `submit-fieldrun` separately.
 
 Use the user's language. A job code is required: normalize to uppercase and accept exactly ten characters from `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`. Ask for a missing or invalid code before calling the API. A request to explain this skill does not start a job.
 
@@ -43,13 +43,22 @@ Use `runFiles(code)`. The default directory is `~/.fieldruns/<CODE>/`; `FIELDRUN
 | `environment.json` | Captured environment, with review redactions applied before submission |
 | `NOTES.md` | Findings, their sources, and questions still awaiting answers |
 
-Keep the server `status` separate from local `stage` (`start`, `review`, `submit`, `done`). Record participation consent as `consent: { acceptedAt, automaticSubmission: true, privacyRulesAccepted: true }`. Never record consent before an affirmative response. Preserve other existing fields when updating a file. Store timestamps as absolute ISO dates; date any relative schedule or observation period explicitly.
+Keep the server `status` separate from local `stage` (`start`, `review`, `submit`, `done`). Record participation consent as `consent: { acceptedAt, automaticSubmission, privacyRulesAccepted: true }`: `automaticSubmission` is `true` for Automatic and `false` for Manual. Reuse that saved choice on resume; never turn Manual into Automatic without an explicit user request. For unsubmitted older runs without this flag, ask for the choice before continuing. Never record consent before an affirmative response. Preserve other existing fields when updating a file. Store timestamps as absolute ISO dates; date any relative schedule or observation period explicitly.
 
 Before creating a run, inspect existing files. If a run ID exists, call `getRun` and resume it. Never call `startRun` again merely to resume. If the server says submitted or claimed, skip preparation and upload; show and open the saved claim URL. If that URL was lost, recover the claim route for the same ID from the configured service's verified web origin; never substitute a new run. If server state cannot be checked, report the failure and preserve the run rather than blindly uploading.
 
 If an existing directory has no run ID, do not overwrite it. Explain the incomplete start and preserve its files before creating a replacement. An expired run cannot be submitted; preserve its findings and ask whether to start again.
 
 ## 1. Start — obtain consent and prepare the findings
+### Participation mode
+
+Include the mode choice in the participation question after explaining the job and collection scope:
+
+- **Automatic:** Perform the job, review the findings, then submit automatically and open the claim page.
+- **Manual:** Save the job prompt and capture the environment, then stop. The user performs the job and invokes `/review-fieldrun <CODE>` and `/submit-fieldrun <CODE>` when ready.
+
+Use the host's question tool when available. An explicit choice in the user's request already answers this question; do not ask again if that request also authorizes the described scope. Silence or an empty answer never selects Automatic. A refusal ends the workflow.
+
 ### Consent message
 
 Structure the consent message as:
@@ -60,7 +69,7 @@ Structure the consent message as:
 4. Explain, in order:
    - what will be read or collected on this computer,
    - how private information will be reviewed,
-   - that the reviewed results will be submitted automatically without another confirmation.
+   - whether the chosen mode submits reviewed results automatically or leaves review and submission to separate user commands.
 5. Explain what happens after submission.
 6. Ask one explicit consent question.
 
@@ -70,19 +79,23 @@ Write the opening in this order, using the Markdown sections and communication r
 
 1. Briefly introduce Fieldrun and name the selected job, with its code as a secondary reference. Use the public job brief to explain what the agent will do, which records or resources it will use, and what the user may need to answer. Do not expose the original prompt before consent.
 2. Put the reward and verified deadline in easy-to-scan bullets. Express a deadline as what must be done by an absolute date and time with a timezone, not merely “execution expiry.” Verify what `expiresAt` governs; do not turn an unexplained expiry into an invented submission or payment deadline. If its scope is unclear, state that limitation plainly.
-3. Explain why consent is needed, then describe the access, collection, privacy review, and automatic submission below in ordinary language. Preserve the full collection scope; explain unfamiliar categories rather than hiding them under “environment information.”
-4. End with one explicit question covering that access, collection, privacy handling, and automatic submission. Make clear that the agent reviews the material and that submission will not trigger another approval request.
+3. Explain why consent is needed, then describe the access, collection, privacy review, and the selected submission mode below in ordinary language. Preserve the full collection scope; explain unfamiliar categories rather than hiding them under “environment information.”
+4. End with one explicit participation question covering that access, collection, privacy handling, and the mode choice. For Automatic, make clear that submission will not trigger another approval request. For Manual, explain that preparation does not submit anything.
 
 Include these participation terms:
 
-- The agent will perform the job on this machine and collect the requested findings and environment information.
+- The agent will capture environment information on this machine. In Automatic it will also perform the job and collect the requested findings; in Manual it prepares the prompt for the user to perform the job.
 - Environment information includes OS, runtime, shell, installed agents, plugin/skill/subagent names, session counts, usage dates, and tool invocation counts extracted from session records. Explain any additional data access requested by this job.
 - Review will remove secrets and anonymize identifying details using the rules below.
-- Once review is complete, the agent will submit the outcome, notes, and reviewed environment to Fieldrun automatically, without a second submission confirmation. Signing in happens afterward on the claim page.
+- In Automatic, once review is complete, the agent will submit the outcome, notes, and reviewed environment to Fieldrun without a second submission confirmation. In Manual, nothing is submitted until the user requests `submit-fieldrun`. Signing in happens afterward on the claim page.
 
-Ask whether the user agrees, and **wait for an affirmative response**. Before consent, do not reveal the prompt, create the run directory, collect the environment, or execute the job. Declining ends the workflow. For an existing run without recorded consent to automatic submission, show these terms and obtain that consent before continuing. A recorded consent remains valid when resuming the same scope; honor later restrictions or withdrawal.
+Ask whether the user agrees, and **wait for an affirmative response**. Before consent, do not reveal the prompt, create the run directory, collect the environment, or execute the job. Declining ends the workflow. For an existing run without recorded participation consent, show the terms and obtain consent for the selected mode before continuing. A recorded consent remains valid when resuming the same scope; honor later restrictions or withdrawal.
 
 After consent, persist the same run ID and start response, the consent record, and the original prompt. Call `captureEnvironment()` for the environment instead of asking the user to recall installed versions. When resuming, keep the original capture date and label any newly captured facts with their own date.
+
+If `consent.automaticSubmission` is `false`, stop here, including on resume. Create `NOTES.md` as an empty findings template only if it does not exist; preserve existing notes. Show the saved `PROMPT.md` in full with a clickable file link and the notes location. Explain that preparation is complete, the job has not been executed by this invocation, and nothing has been submitted. Tell the user to perform the prompt's work, record the results, then run `/review-fieldrun <CODE>` followed by `/submit-fieldrun <CODE>`. Do not execute the job or enter the review or submit sections below.
+
+The remaining steps apply only when `consent.automaticSubmission` is `true`.
 
 Read `PROMPT.md` and perform its requested work. Capture tool output and concrete observations. Separate captured facts, the user's statements, and the agent's interpretations. Never invent personal experience, frequency, time saved, or reasons for abandoning a tool. Machine-verifiable questions should be answered from evidence; questions about the user's judgment remain for review.
 
@@ -125,7 +138,7 @@ Build `payload = { outcome, notes, environment }` from the final saved files. Se
 
 On success, save `status: "submitted"`, `stage: "done"`, `url`, `expiresAt`, and `submittedAt` in `run.json`. The response body supplies the URL and expiry but may omit status; do not overwrite status with an undefined value. Keep the local files.
 
-Call `getRun(runId)` and confirm the same ID, job code, submitted/claimed status, outcome, notes, and environment. The server exposes `os`, `runtime`, `shell`, and `agent` at the run's top level and stores the submitted `environment.extra` as `run.environment`. If verification fails, report submission and verification separately; do not upload again merely because verification failed.
+Call `getRun(runId)` and confirm the same ID, job code, submitted/claimed status, outcome, notes, and environment. The server trims surrounding whitespace from notes; compare the readback with the saved notes after that normalization, without ignoring other differences. The server exposes `os`, `runtime`, `shell`, and `agent` at the run's top level and stores the submitted `environment.extra` as `run.environment`. If verification fails, report submission and verification separately; do not upload again merely because verification failed.
 
 Give the user the returned claim URL and open it in a visible browser. If the host prevents a subagent from opening a visible tab, ask the parent to open and inspect that exact URL; this is a browser handoff, not another consent or submission step. Keep the claim tab open as a user-facing deliverable when the browser supports that. Inspect the rendered page to confirm it corresponds to this run and presents the claim or sign-in flow. A URL printed in chat or a successful open command alone does not prove that the page loaded. If browser inspection is unavailable or the page fails, report that limitation explicitly.
 

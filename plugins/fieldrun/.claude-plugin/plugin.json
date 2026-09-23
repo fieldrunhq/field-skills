@@ -1,12 +1,14 @@
 {
   "name": "fieldrun",
   "version": "0.10.0",
-  "description": "Run a Fieldrun job with one skill: start, review, then automatically submit the findings and open the claim page. No account needed until claiming.",
+  "description": "Run Fieldrun jobs automatically through review and submission, or prepare manually and use separate review and submit skills. No account needed until claiming.",
   "author": {
     "name": "Fieldrun"
   },
   "keywords": [
     "start-fieldrun",
+    "review-fieldrun",
+    "submit-fieldrun",
     "field-testing",
     "mcp",
     "compatibility"
