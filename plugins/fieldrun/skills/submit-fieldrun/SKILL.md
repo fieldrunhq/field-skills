@@ -40,11 +40,9 @@ If the notes do not make the outcome unambiguous, ask with AskUserQuestion. Do
 not infer it — the outcome is the field the findings report ranks by, and a
 guess here becomes a wrong number in front of a customer.
 
-### 3. Show exactly what will be sent, then ask
+### 3. Link to what will be sent
 
-Print the full payload: the outcome, `NOTES.md` in full, and every field of the
-environment fingerprint. In full — a summary is not something a user can consent
-to, because the thing they would object to is exactly what a summary drops. Ask for confirmation only if the user has not already explicitly authorized submission of these results. Never print raw secrets; return to review if any remain.
+State the outcome and provide clickable links to the reviewed `NOTES.md` and `environment.json` so the user can read what will be sent. Do not reproduce the notes, original job prompt, or raw payload in the conversation. Ask for confirmation only if the user has not already explicitly authorized submission of these results; write any necessary question directly in the conversation with enough context to answer. Never print raw secrets; return to review if any remain.
 
 The user must be able to see the fingerprint before it goes. It includes their
 OS and release, runtime and shell, and the agent inventory — which agents are

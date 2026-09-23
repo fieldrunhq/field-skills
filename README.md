@@ -117,8 +117,10 @@ name can say what someone is working on. That is the default because an
 inventory of anonymous counts is worth very little, and the integrated review inspects every field before submission. Participation
 consent covers removing secrets and anonymizing identifying details. Review
 asks about cases where those rules cannot resolve disclosure without changing
-a material finding. The final notes and a description of redactions are shown
+a material finding. The final notes are linked for the user to read, with a brief description of redactions,
 before automatic submission; manual runs use the separate review and submit commands.
+Questions that need answers appear directly in the conversation; the notes and original
+job prompt are not reproduced there.
 
 ## Configuration
 

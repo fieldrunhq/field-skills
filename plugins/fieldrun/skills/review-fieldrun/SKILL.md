@@ -5,7 +5,7 @@ description: Review a completed Fieldrun run locally before it is submitted — 
 
 # Review Fieldrun
 
-Read a run back to the user and let them fix it **before** it leaves the
+Help the user read and fix a saved run **before** it leaves the
 machine. This skill never uploads. That is `submit-fieldrun`'s job, and keeping
 the two apart is what makes this one safe to run at any time.
 
@@ -27,9 +27,9 @@ For the chosen run, show:
 
 - the job title and brief from `job.json`,
 - the run status from `run.json`,
-- the captured fingerprint from `environment.json`, including the agent
-  inventory: which agents are installed, session counts, and last-used dates,
-- the notes from `NOTES.md`.
+- clickable links to `NOTES.md` and `environment.json`, inviting the user to read them.
+
+Do not reproduce the notes, original job prompt, or raw environment data in the conversation. Write questions that need an answer directly in the conversation, with enough context to answer without opening the files.
 
 ### 3. Check for anything private
 
@@ -41,10 +41,10 @@ their own machine routinely contains things they would not choose to send:
   most telling field captured: a subagent is named after the job it does, so
   `support-triage` says the practitioner runs a support desk and `acme-billing`
   names a client outright. Descriptions and project paths are never captured,
-  but the names alone can be enough. Show them and ask,
+  but the names alone can be enough,
 - the captured agent inventory in `environment.json`, which **names** the
   plugins and skills installed on the machine. A plugin name can say what
-  someone is working on or who they work for. Show the list and ask — naming is
+  someone is working on or who they work for. Naming is
   the default because an inventory of anonymous counts is worth little, but it
   is the user's call, not ours,
 - API keys, tokens, connection strings pasted from a terminal,
@@ -74,9 +74,7 @@ cloud VM cannot produce, and they are the reason the run is worth paying for.
 
 ### 5. Show the output, report, and say what happens next
 
-**Print `NOTES.md` in full** after any edits, so the user sees exactly what the
-run now says rather than a description of it. Then tell them whether it is ready
-and what you changed at their direction.
+After any edits, link to the saved `NOTES.md` and invite the user to read it. Do not paste its contents into the conversation. Tell them whether it is ready and briefly explain what changed. Write any unresolved questions directly in the conversation.
 For an unsubmitted run, when ready, save the outcome in `run.json` and set local `stage: "submit"` without changing server status. Preserve terminal stages for already-submitted runs. Stop after this review even if the saved automatic-submission flag is true: invoking review alone does not request an upload.
 Then end with this block, with the real code substituted and the `→` on whichever
 line is actually next:
