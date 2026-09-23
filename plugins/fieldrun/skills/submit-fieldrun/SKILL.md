@@ -4,6 +4,7 @@ description: Submit a reviewed Fieldrun run back to Fieldrun — the outcome, th
 ---
 
 # Submit Fieldrun
+Deliver substantive user-facing explanations only in the final answer, with all context needed to understand them without opening the work/progress panel; keep any required progress updates to brief status notices.
 
 Send one completed run back to Fieldrun.
 

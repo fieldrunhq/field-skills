@@ -4,6 +4,7 @@ description: Review a completed Fieldrun run locally before it is submitted — 
 ---
 
 # Review Fieldrun
+Deliver substantive user-facing explanations only in the final answer, with all context needed to understand them without opening the work/progress panel; keep any required progress updates to brief status notices.
 
 Help the user read and fix a saved run **before** it leaves the
 machine. This skill never uploads. That is `submit-fieldrun`'s job, and keeping

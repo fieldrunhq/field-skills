@@ -4,6 +4,7 @@ description: Run or resume a Fieldrun job from its ten-character code through st
 ---
 
 # Start Fieldrun
+Deliver substantive user-facing explanations only in the final answer, with all context needed to understand them without opening the work/progress panel; keep any required progress updates to brief status notices.
 
 Choose automatic or manual participation once. Automatic completes **start → review → submit** in this skill. Manual performs the job and writes `NOTES.md` locally, then the user runs `review-fieldrun` and `submit-fieldrun` separately.
 
