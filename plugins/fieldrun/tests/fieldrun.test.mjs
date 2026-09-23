@@ -163,18 +163,10 @@ test('the fingerprint never carries conversation contents', async () => {
   }
 });
 
-// The handover block is the only thing telling a practitioner what the second
-// half of the workflow is called. A run that is done but never submitted is
-// worth nothing, so every skill is required to end with one.
-test('every skill ends by naming the next step', async () => {
-  const { readFile: rf } = await import('node:fs/promises');
-  const skills = ['start-fieldrun', 'review-fieldrun', 'submit-fieldrun'];
-  for (const name of skills) {
-    const body = await rf(new URL(`../skills/${name}/SKILL.md`, import.meta.url), 'utf8');
-    assert.match(body, /NEXT {2}─+/, `${name} has no NEXT block`);
-    const arrows = (body.match(/^ {2}→ {2}/gm) ?? []).length;
-    assert.equal(arrows, 1, `${name} should mark exactly one next action, found ${arrows}`);
-  }
+test('the plugin exposes one entrypoint', async () => {
+  const { readdir } = await import('node:fs/promises');
+  const entries = await readdir(new URL('../skills/', import.meta.url), { withFileTypes: true });
+  assert.deepEqual(entries.filter(e => e.isDirectory()).map(e => e.name), ['start-fieldrun']);
 });
 
 // "Agent" means the host doing the work AND the subagents defined inside it.

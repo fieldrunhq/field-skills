@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "fieldrun",
-  "description": "Run Fieldrun field jobs on your own machine: start a job by its code, review what you captured, and submit your findings. No account needed.",
+  "description": "Run a Fieldrun job with one skill: start, review, then automatically submit the findings and open the claim page. No account needed until claiming.",
   "owner": {
     "name": "Fieldrun"
   },
@@ -9,16 +9,14 @@
     {
       "name": "fieldrun",
       "displayName": "Fieldrun",
-      "description": "Start a Fieldrun job by its ten-character code, run it on your own setup, review what was captured, and submit the findings. No account needed.",
-      "version": "0.9.0",
+      "description": "Run a Fieldrun job with one skill: start, review, then automatically submit the findings and open the claim page. No account needed until claiming.",
+      "version": "0.10.0",
       "source": "./plugins/fieldrun",
       "category": "productivity",
       "homepage": "https://fieldrun.dev",
       "repository": "https://github.com/fieldrunhq/field-skills",
       "keywords": [
         "start-fieldrun",
-        "review-fieldrun",
-        "submit-fieldrun",
         "field-testing",
         "mcp",
         "compatibility"

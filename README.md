@@ -1,12 +1,14 @@
 # field-skills
 
-Three Claude Code skills for running Fieldrun field jobs on your own machine.
+One skill for completing Fieldrun field jobs on your own machine.
 
-| Skill | Does |
-| --- | --- |
-| `/start-fieldrun <CODE>` | Starts a job, shows the brief, sets it up on your say-so, captures the environment, writes the run directory |
-| `/review-fieldrun [CODE]` | Reads a run back to you and strips anything private. Never uploads |
-| `/submit-fieldrun <CODE>` | Shows exactly what will be sent, submits it, and hands back your claim link |
+Run `/start-fieldrun <CODE>` once. The skill proceeds through three stages:
+
+1. **Start:** Show the brief, reward, collection scope and automatic submission terms. Wait for participation consent, then perform the job and prepare findings.
+2. **Review:** Check missing answers, weak observations, unclear outcomes and private information. Ask for unresolved details and wait. Apply the privacy rules agreed at the start.
+3. **Submit:** When review passes, upload without a second submission confirmation, verify the saved result, and open the claim page.
+
+Use the same command to resume a saved run. An already-submitted run opens its existing claim link without another upload. No separate review or submit command is needed.
 
 `start-fieldrun` **requires a job code** — ten characters such as `HFDJQXPC5I`.
 
@@ -16,7 +18,7 @@ Three Claude Code skills for running Fieldrun field jobs on your own machine.
 ~/.fieldruns/
   HFDJQXPC5I/
     job.json            title, brief, reward, started timestamp
-    run.json            run id, status, and your claim URL once submitted
+    run.json            run ID, server status, stage, consent, outcome and claim URL
     PROMPT.md           the task, verbatim
     environment.json    the captured fingerprint
     NOTES.md            what you observed
@@ -43,7 +45,7 @@ None of that needs a credential. You should be able to do a job and see what
 the work is like before deciding to have anything to do with us — the account
 is only needed to be *paid*, so that is the one place it is asked for: the
 claim link you get after submitting. Keep that link; it is the only way to
-claim the run, and it expires after two weeks.
+claim the run. The skill reports the absolute expiry returned by the server; the window starts when the run starts, not when it is submitted.
 
 Starting a job reserves nothing. No slot is consumed and no commitment is made,
 so reading a brief and walking away costs the job nothing. The skill still asks
@@ -110,9 +112,11 @@ environment capture into a full-disk scan.
 
 The inventory **names** installed plugins, which is a real disclosure — a plugin
 name can say what someone is working on. That is the default because an
-inventory of anonymous counts is worth very little, but `review-fieldrun` shows
-the list and lets the practitioner cut anything they would rather not send, and
-`submit-fieldrun` shows the whole payload before it goes.
+inventory of anonymous counts is worth very little, and the integrated review inspects every field before submission. Participation
+consent covers removing secrets and anonymizing identifying details. Review
+asks about cases where those rules cannot resolve disclosure without changing
+a material finding. The final notes and a description of redactions are shown
+before automatic submission.
 
 ## Configuration
 
@@ -144,8 +148,6 @@ plugins/fieldrun/
   .claude-plugin/plugin.json
   lib/fieldrun.mjs          paths, API client, environment capture
   skills/start-fieldrun/SKILL.md
-  skills/review-fieldrun/SKILL.md
-  skills/submit-fieldrun/SKILL.md
   tests/fieldrun.test.mjs
 ```
 

@@ -1,4 +1,4 @@
-// Shared helpers for the three Fieldrun skills.
+// Helpers for the Fieldrun start → review → submit workflow.
 //
 // Every run lives under ONE well-known directory — ~/.fieldruns — with one
 // folder per job code. A practitioner accumulates runs over time, and scattering
@@ -605,8 +605,7 @@ export async function readJson(path) {
   }
 }
 
-/// Every run currently on this machine, newest first — what review-fieldrun
-/// lists when it is invoked with no code.
+/// Every saved run on this machine, newest first.
 export async function listRuns() {
   const root = fieldrunsRoot();
   if (!existsSync(root)) return [];
