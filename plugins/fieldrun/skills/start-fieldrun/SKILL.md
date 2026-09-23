@@ -32,7 +32,7 @@ Use this structure naturally, not as a form with mandatory headings: **recogniza
 
 Poor: “Search procedure/model change: you switched from a low-cost model to the parent model. Did you keep this combination, and why?”
 
-Better: “이번 작업은 AI 사용 방식을 바꾼 뒤 실제로 계속 사용했는지와 그 이유를 정리하는 일입니다. [프로젝트의 목적을 설명하는 익명화된 표현] 관련 기록에서, [검색하려던 내용]을 찾는 일을 별도 AI 작업으로 나누고 검색 모델을 [확인된 모델 A]에서 [확인된 모델 B]로 바꾼 내용을 찾았습니다. 변경 후 검색을 두 번 실행한 기록은 있지만, 이후에도 같은 방식을 썼는지는 확인되지 않습니다. 이 검색 방식을 그 뒤에도 사용하셨나요? 계속 사용하거나 다시 바꾸셨다면 그 이유를 알려주세요. 제가 다른 작업의 기록을 연결했다면 바로잡아 주세요.”
+Better: “This job asks us to document whether you kept using changes to your AI workflow and why. In records about [an anonymized description of the project’s purpose], I found that you moved the search for [what you were trying to find] into a separate AI task and changed its model from [verified model A] to [verified model B]. The records show two searches after the change, but do not establish whether you continued using that setup afterward. Did you keep using this search setup? Please explain why you kept it or changed it again. If I have connected records from different tasks, please correct me.”
 
 The two executions above are illustrative, not facts about the current user. Apply the same structure to questions about instruction changes, tools, skills, failures, or any other job topic. Do not repeat the full job introduction for every item in one message, but retain each item's recognizable context.
 
