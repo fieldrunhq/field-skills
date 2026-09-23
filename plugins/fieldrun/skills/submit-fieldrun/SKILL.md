@@ -9,16 +9,6 @@ Send one completed run back to Fieldrun.
 
 This is the separate submission command for manual runs. `start-fieldrun` also submits in Automatic mode. A completed start or review in Manual does not authorize submission; require the user's explicit submission request. Honor existing authorization for the same payload and scope instead of asking twice.
 
-## Communication
-
-### Final-answer delivery
-
-Deliver substantive user-facing explanations only in the final answer (`final` on hosts with channels). This includes the job introduction, participation terms, consent or follow-up questions and their context, findings, file links, limitations, errors, and next steps. Do not put them in analysis/reasoning, commentary/progress messages, tool output, or question-tool payloads. If the host requires progress updates, keep them to brief action/status notices without the explanation or question.
-
-Each final answer must stand on its own with the work/progress panel collapsed. Never rely on an earlier progress message to supply information the user needs to decide or answer. Do not preview the full explanation in progress and repeat a shortened version in final.
-
-When consent or an answer is required, put the complete explanation and question together in the final answer, end the turn, and wait for the user's next message. Do not call a question tool as a substitute or continue dependent work in the same turn. When no answer is needed, finish the authorized work first and deliver the explanation once in the final answer; a workflow stage boundary is not itself a reason to end the turn.
-
 ## Runtime
 
 Resolve `lib/fieldrun.mjs` beside this skill in a standalone installation, or `../../lib/fieldrun.mjs` in the plugin, and import it by absolute path. Use `runFiles(code)` so `FIELDRUN_HOME` is respected. Normalize and validate the ten-character job code before opening files or calling the API. Preserve existing fields, including `consent.automaticSubmission`, when updating `run.json`. Use the user's language.
@@ -46,17 +36,20 @@ The outcome is required and must be exactly one of:
 | `friction` | Finished, but something got in the way |
 | `blocker` | Could not finish |
 
-If the notes do not make the outcome unambiguous, explain the uncertainty and ask in the final answer, then end the turn and wait. Do
+If the notes do not make the outcome unambiguous, ask with AskUserQuestion. Do
 not infer it — the outcome is the field the findings report ranks by, and a
 guess here becomes a wrong number in front of a customer.
 
 ### 3. Link to what will be sent
 
-Check that the reviewed files and collection scope have been made available to the user and that submission is explicitly authorized. If the reviewed files or collection scope have not yet been shown, or authorization is missing, state the outcome, link to the reviewed `NOTES.md` and `environment.json`, explain what will be sent, and ask for confirmation in one final answer. End the turn and wait. Do not reproduce the notes, original job prompt, or raw payload. Never print raw secrets; return to review if any remain.
+State the outcome and provide clickable links to the reviewed `NOTES.md` and `environment.json` so the user can read what will be sent. Do not reproduce the notes, original job prompt, or raw payload in the conversation. Ask for confirmation only if the user has not already explicitly authorized submission of these results; write any necessary question directly in the conversation with enough context to answer. Never print raw secrets; return to review if any remain.
 
-When the reviewed files have already been made available to the user and they have explicitly authorized this submission, continue to upload without a separate explanatory message or another confirmation. Include the links and explanation once in the final report after submission and verification. Honor any requested exclusions from the environment before submission; if they change reviewed content, return to review.
-
-The collection explanation must cover OS and release, runtime, shell, installed agents, session counts, usage dates, and plugin/skill/subagent names included in the reviewed environment.
+The user must be able to see the fingerprint before it goes. It includes their
+OS and release, runtime and shell, and the agent inventory — which agents are
+installed, how many sessions each has, when each was last used, and the
+**names** of the Claude Code plugins and of any subagents configured on the
+machine. If they are not comfortable with a field, drop it and send the rest
+— a run with a missing field is still useful; a run the user regrets is not.
 
 If they have not completed `/review-fieldrun`, ask them to review before sending. Submission
 cannot be undone from here.

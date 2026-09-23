@@ -9,16 +9,6 @@ Help the user read and fix a saved run **before** it leaves the
 machine. This skill never uploads. That is `submit-fieldrun`'s job, and keeping
 the two apart is what makes this one safe to run at any time.
 
-## Communication
-
-### Final-answer delivery
-
-Deliver substantive user-facing explanations only in the final answer (`final` on hosts with channels). This includes the job introduction, participation terms, consent or follow-up questions and their context, findings, file links, limitations, errors, and next steps. Do not put them in analysis/reasoning, commentary/progress messages, tool output, or question-tool payloads. If the host requires progress updates, keep them to brief action/status notices without the explanation or question.
-
-Each final answer must stand on its own with the work/progress panel collapsed. Never rely on an earlier progress message to supply information the user needs to decide or answer. Do not preview the full explanation in progress and repeat a shortened version in final.
-
-When consent or an answer is required, put the complete explanation and question together in the final answer, end the turn, and wait for the user's next message. Do not call a question tool as a substitute or continue dependent work in the same turn. When no answer is needed, finish the authorized work first and deliver the explanation once in the final answer; a workflow stage boundary is not itself a reason to end the turn.
-
 ## Runtime
 
 Resolve `lib/fieldrun.mjs` beside this skill in a standalone installation, or `../../lib/fieldrun.mjs` in the plugin, and import it by absolute path. Use `runFiles(code)` so `FIELDRUN_HOME` is respected. Normalize and validate the ten-character job code before opening files or calling the API. Preserve existing fields, including `consent.automaticSubmission`, when updating `run.json`. Use the user's language.
