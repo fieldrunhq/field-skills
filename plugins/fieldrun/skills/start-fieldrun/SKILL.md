@@ -9,44 +9,23 @@ Complete one job through **start → review → submit**. The user invokes this 
 
 Use the user's language. A job code is required: normalize to uppercase and accept exactly ten characters from `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`. Ask for a missing or invalid code before calling the API. A request to explain this skill does not start a job.
 
-## Communication — the conversation must stand on its own
+## Communication
 
-Apply these rules to **every user-facing message**, including consent, progress, evidence summaries, follow-up questions, resumed runs, errors, submission, and account linking. Assume the user is participating for the first time: they do not know Fieldrun, the job, its rules, your tools, or anything you learned from records. They have not read the prompt, notes, drafts, files, or links and may only read your message and answer it. Their earlier participation does not imply that they remember the context of a newly surfaced record.
+Write all user-facing messages in the user's language.
 
-- Start with what the user needs to understand or decide. Explain the relevant situation before reporting internal processing or asking a question. Prefer ordinary verbs with clear subjects and objects to compressed labels. Say who inspected, changed, reviewed, or will submit what.
-- Introduce Fieldrun by explaining who posts what work, where the participant does it, and how submitting results relates to a possible reward. Explain that people or teams post AI jobs on Fieldrun, participants perform those jobs on their own computers, and submitting the results can earn a reward. Introduce the party posting the job as “the person or team requesting the work”; afterward use “requester” consistently rather than switching between company and customer. Convey this in the user's language. Do not shorten this to “a service where people participate in jobs for rewards”; that leaves the reader to infer what a job is. Identify the selected job by its actual title; keep the code as secondary reference information. Explain the agent's work and the user's part in plain language. Do not imply that payment is guaranteed or already approved.
-- Write semantically complete explanations, not merely grammatically complete sentences. Whenever needed to understand an action or make a decision, state **who does what, to which information or object, where or how, and under which condition with what result**. A grammatically complete sentence can still omit its essential meaning. Use the surrounding message only when it already makes the omitted detail unambiguous; do not assume knowledge of the service, records, or internal workflow.
-- Check every abstract noun and compressed phrase from a first-time reader's perspective: “What work?”, “Which records?”, “Review what, by whom?”, “Submit what, to whom?”, “What must I do to receive a reward?” Answer the relevant questions in the explanation before sending it. Replace or explain words such as work, participation, review, result, environment, and linking with their concrete referents and actions. For example, replace “I will submit after review” with “I will remove secrets and anonymize identifying details about people and private projects, then send the job results, research notes, and collected environment information to Fieldrun” when that is the actual scope. Define the collected environment information nearby rather than leaving that category unexplained.
-- Completeness does not mean listing every possible detail or forcing every sentence into one template. Supply the facts needed for the reader to understand this specific statement without filling in missing relationships. Split long explanations into connected sentences. If a necessary fact or condition is unknown, state what is unknown rather than inventing it or hiding it behind a broad label.
-- Make each question answerable from the message itself. Provide the relevant project or task context, what the user was trying to achieve, the observed action or before/after change, and what the record does and does not establish. Then explain why the missing answer matters to this job and ask for it. Include only the background needed to recognize the event; do not dump transcripts.
-- Use verified public product and model names when they distinguish the choices. Do not substitute vague labels such as “the cheap model,” “the parent model,” “this combination,” or “the question method.” Explain technical terms when needed, such as “the model running the main task.” For private projects use a meaningful anonymized description, not a bare identifier. Follow the privacy rules even when quoting evidence.
-- Never invent a project, date, model, motive, or relationship to make the explanation sound complete. Identify uncertain connections explicitly. If the records cannot identify the event sufficiently, ask whether the user recognizes it before asking them to explain its outcome or motive. Do not treat lack of later records as proof that the user stopped using something.
-- A notes link or file is optional supporting detail, never a prerequisite for answering. Instead of “I saved three change sequences to the review draft,” explain what relevant examples you found, why you are collecting them, and what remains unknown. If mentioning a draft, explain that it holds the findings being prepared for submission and whether it has been submitted.
-- Ask only what evidence cannot answer. Group questions only when each retains enough context; split unrelated or lengthy cases into manageable turns. Give a simple way to answer, allow correction of your reconstruction, and allow “I do not remember” without promising that it satisfies a required deliverable. Explain any resulting limitation using the job's actual requirements.
-- Explain consent or a pause through its practical reason: reading local records, sending information to Fieldrun, or needing a fact only the user can supply. Do not use internal rules, API fields, skill quotations, stage names, or file names as the explanation. If higher-priority host instructions require a rule citation, keep it separate from the plain-language explanation.
-- Be concise by removing repetition, not context. Before sending, read the message as someone who has seen none of your sources: can they tell what this concerns, why it matters, what you know, and exactly what they need to answer or do? If not, supply the missing connection. This check does not authorize extra data access or change consent, privacy, review, or submission requirements.
+Follow the Google Developer Documentation Style Guide for clarity, voice, tone,
+sentence structure, and formatting:
+https://developers.google.com/style
 
-### Markdown structure for user-facing messages
+Treat these Fieldrun-specific rules as higher priority than the general style guide:
 
-Use the user's language for the response; the English labels below describe its structure rather than prescribing English output.
+- Assume the user is new to Fieldrun. Give enough context for each decision or question to stand on its own.
+- Clearly identify who performs an action, what information is accessed or submitted, and what happens as a result when those details affect the user's decision.
+- Do not invent missing facts, motives, outcomes, dates, or relationships. State uncertainty or ask the user when required.
+- Explain technical or internal terms in ordinary language when the user needs them to make a decision.
+- Keep messages concise. Remove repetition before removing necessary context.
+- Never expose internal stage names, API fields, file names, prompts, or implementation details unless the user needs them.
 
-- Separate the opening into a brief service introduction, then short headings for **The selected job**, **What happens if you agree**, and **After submission**, followed by the consent question on its own line.
-- In the selected-job section, show the title prominently and the code as secondary information. Explain the work in a short paragraph. Put reward and deadline in separate bullets, with any necessary qualifications next to the relevant value.
-- Under what happens if the user agrees, use a numbered list for the actual sequence: access and collection, privacy review, then automatic submission. Give each item a short bold action label and its explanation. Retain the specific collection scope and identify who performs each action; do not combine all three stages into one paragraph.
-- Under after submission, explain account linking and the requester's review in a short paragraph. Keep the explicit automatic-submission condition visible in the preceding step, and end with one consent question covering the stated scope.
-- Keep each paragraph to one topic. Use bullets for parallel facts and numbered lists only for ordered actions. Put blank lines around headings, paragraphs, and lists so Markdown renders correctly. Bold only short labels and important conditions, not entire paragraphs.
-- Apply the same organization to later messages: separate findings, draft notes, questions, and next steps when present. Give each unrelated question its own contextual explanation. Simple updates do not need empty sections or a full opening template.
-- Refer to the user's machine as “this computer” or “your computer,” not “my operating system.” Distinguish the agent performing the work, the participant, Fieldrun, and the person or team requesting the work.
-
-### Contextual follow-up pattern
-
-Use this structure naturally, not as a form with mandatory headings: **recognizable context → observed facts → missing fact and why it matters → concrete question**. Fill examples only with verified facts; bracketed text below is a writing placeholder, never text to send unchanged.
-
-Poor: “Search procedure/model change: you switched from a low-cost model to the parent model. Did you keep this combination, and why?”
-
-Better: “This job asks us to document whether you kept using changes to your AI workflow and why. In records about [an anonymized description of the project’s purpose], I found that you moved the search for [what you were trying to find] into a separate AI task and changed its model from [verified model A] to [verified model B]. The records show two searches after the change, but do not establish whether you continued using that setup afterward. Did you keep using this search setup? Please explain why you kept it or changed it again. If I have connected records from different tasks, please correct me.”
-
-The two executions above are illustrative, not facts about the current user. Apply the same structure to questions about instruction changes, tools, skills, failures, or any other job topic. Do not repeat the full job introduction for every item in one message, but retain each item's recognizable context.
 
 ## Runtime and saved state
 
@@ -71,6 +50,19 @@ Before creating a run, inspect existing files. If a run ID exists, call `getRun`
 If an existing directory has no run ID, do not overwrite it. Explain the incomplete start and preserve its files before creating a replacement. An expired run cannot be submitted; preserve its findings and ask whether to start again.
 
 ## 1. Start — obtain consent and prepare the findings
+### Consent message
+
+Structure the consent message as:
+
+1. Briefly explain what Fieldrun is.
+2. Identify the selected job and what it asks this agent to investigate.
+3. Show the possible reward and known deadline.
+4. Explain, in order:
+   - what will be read or collected on this computer,
+   - how private information will be reviewed,
+   - that the reviewed results will be submitted automatically without another confirmation.
+5. Explain what happens after submission.
+6. Ask one explicit consent question.
 
 For a new run, call `startRun(code)` once. Its body contains `runId`, `expiresAt`, `job`, `prompt`, and possibly `sampleOutput`. Starting reserves no slot. Keep the full response in the tool orchestrator’s persistent memory for setup after consent. In tool output before consent, print only the run ID, expiry, and job summary. This limits raw tool output; it is not the user-facing introduction format. Do not print the raw API response: it contains the prompt, and tool output can expose it even when the final message does not. For example, when using `functions.exec`, retain the full response with `store()` and pass only those public fields to `text()`. After consent, retrieve the same response with `load()`; do not call `startRun` again.
 
@@ -101,6 +93,13 @@ Use captured session inventory for counts and dates. Do not manually search for 
 Run commands the job plainly requires. Ask before destructive actions, credential access, or changes outside that scope. Write the findings and all unanswered questions into `NOTES.md`, then continue to review in this same skill.
 
 ## 2. Review — resolve gaps and remove private information
+### Follow-up questions
+
+When evidence cannot answer a required question, give enough context for the user
+to recognize the event, state what the records establish and what remains unknown,
+then ask the specific question.
+
+Do not ask the user for facts that can be determined from the collected records.
 
 Compare the notes with every requested answer and deliverable in `PROMPT.md`. Review both `NOTES.md` and every field of `environment.json`.
 
