@@ -13,6 +13,14 @@ Use the user's language. A job code is required: normalize to uppercase and acce
 
 Write all user-facing messages in the user's language.
 
+### Final-answer delivery
+
+Deliver substantive user-facing explanations only in the final answer (`final` on hosts with channels). This includes the job introduction, participation terms, consent or follow-up questions and their context, findings, file links, limitations, errors, and next steps. Do not put them in analysis/reasoning, commentary/progress messages, tool output, or question-tool payloads. If the host requires progress updates, keep them to brief action/status notices without the explanation or question.
+
+Each final answer must stand on its own with the work/progress panel collapsed. Never rely on an earlier progress message to supply information the user needs to decide or answer. Do not preview the full explanation in progress and repeat a shortened version in final.
+
+When consent or an answer is required, put the complete explanation and question together in the final answer, end the turn, and wait for the user's next message. Do not call a question tool as a substitute or continue dependent work in the same turn. When no answer is needed, finish the authorized work first and deliver the explanation once in the final answer; a workflow stage boundary is not itself a reason to end the turn.
+
 Follow the Google Developer Documentation Style Guide for clarity, voice, tone,
 sentence structure, and formatting:
 https://developers.google.com/style
@@ -58,30 +66,19 @@ Include the mode choice in the participation question after explaining the job a
 - **Automatic:** Perform the job, review the findings, then submit automatically and open the claim page.
 - **Manual:** Perform the job and write the findings into `NOTES.md`, then stop before review and submission. The user invokes `/review-fieldrun <CODE>` and `/submit-fieldrun <CODE>` when ready.
 
-Use the host's question tool when available. An explicit choice in the user's request already answers this question; do not ask again if that request also authorizes the described scope. Silence or an empty answer never selects Automatic. A refusal ends the workflow.
+Present the complete participation explanation and mode choice in the final answer, then end the turn and wait for the user's reply. Do not use a question tool for this step. An explicit choice in the user's request already answers this question; do not ask again if that request also authorizes the described scope. Silence or an empty answer never selects Automatic. A refusal ends the workflow.
 
 ### Consent message
 
-Structure the consent message as:
-
-1. Briefly explain what Fieldrun is.
-2. Identify the selected job and what it asks this agent to investigate.
-3. Show the possible reward and known deadline.
-4. Explain, in order:
-   - what will be read or collected on this computer,
-   - how private information will be reviewed,
-   - whether the chosen mode submits reviewed results automatically or leaves review and submission to separate user commands.
-5. Explain what happens after submission.
-6. Ask one explicit consent question.
-
 For a new run, call `startRun(code)` once. Its body contains `runId`, `expiresAt`, `job`, `prompt`, and possibly `sampleOutput`. Starting reserves no slot. Keep the full response in the tool orchestrator’s persistent memory for setup after consent. In tool output before consent, print only the run ID, expiry, and job summary. This limits raw tool output; it is not the user-facing introduction format. Do not print the raw API response: it contains the prompt, and tool output can expose it even when the final message does not. For example, when using `functions.exec`, retain the full response with `store()` and pass only those public fields to `text()`. After consent, retrieve the same response with `load()`; do not call `startRun` again.
 
-Write the opening in this order, using the Markdown sections and communication rules above:
+Write one complete consent message in the final answer, in this order:
 
 1. Briefly introduce Fieldrun and name the selected job, with its code as a secondary reference. Use the public job brief to explain what the agent will do, which records or resources it will use, and what the user may need to answer. Do not expose the original prompt before consent.
 2. Put the reward and verified deadline in easy-to-scan bullets. Express a deadline as what must be done by an absolute date and time with a timezone, not merely “execution expiry.” Verify what `expiresAt` governs; do not turn an unexplained expiry into an invented submission or payment deadline. If its scope is unclear, state that limitation plainly.
-3. Explain why consent is needed, then describe the access, collection, privacy review, and the selected submission mode below in ordinary language. Preserve the full collection scope; explain unfamiliar categories rather than hiding them under “environment information.”
-4. End with one explicit participation question covering that access, collection, privacy handling, and the mode choice. For Automatic, make clear that submission will not trigger another approval request. For Manual, explain that preparation does not submit anything.
+3. Explain that the agent needs permission to read local records and collect information, then describe the access, collection, privacy review, and the selected submission mode below in ordinary language. Preserve the full collection scope; explain unfamiliar categories rather than hiding them under “environment information.”
+4. Explain that signing in after submission attaches the run to the user's account and the customer reviews the result afterward.
+5. End with one explicit participation question covering that access, collection, privacy handling, and the mode choice. For Automatic, make clear that submission will not trigger another approval request. For Manual, explain that preparation does not submit anything.
 
 Include these participation terms:
 
@@ -131,7 +128,7 @@ Before asking review questions, save the findings collected so far and the unres
 
 Present unresolved questions using the contextual follow-up pattern above. Explain why these answers are needed to finish this job; do not lead with a count of extracted changes or a saved draft. Save `stage: "review"`, and **wait**. Do not submit while any required question remains unresolved. In delegated execution, report the questions to the parent and await actual answers; the parent must not fabricate observations. Incorporate the answers with their provenance and review again. Elapsed time, a generic “continue,” and silence do not supply missing answers.
 
-When review passes, save the final notes, reviewed environment, and outcome. Introduce the final notes as the findings the agent has reviewed and is about to send to Fieldrun. Link to the final `NOTES.md` for the user to read and briefly describe redactions and material limitations without reproducing the notes. Do not require the user to read or approve the notes to continue. Move directly to submit; do not ask for a second submission confirmation or suggest another skill. If the user limited the request to local preparation or review, respect that limit and stop before uploading.
+When review passes, save the final notes, reviewed environment, and outcome. Move directly to the already-authorized automatic submission; do not emit a separate review explanation, end the turn, or ask for a second submission confirmation. In the final answer after submission and verification, link to the reviewed `NOTES.md`, invite the user to read it, and briefly describe redactions and material limitations without reproducing the notes. If the user limited the request to local preparation or review, stop before uploading and give that report in the final answer instead.
 
 ## 3. Submit — upload, verify, and open the claim page
 
