@@ -1,6 +1,6 @@
 ---
 name: submit-fieldrun
-description: Submit a reviewed Fieldrun run back to Fieldrun — the outcome, the notes and the environment fingerprint. Use when the user wants to send, submit, upload or finish a field run. Requires the job code, needs no account, confirms exactly what will be sent, and hands back a claim URL where the practitioner signs in to be paid.
+description: Submit a reviewed Fieldrun run back to Fieldrun — the notes and the environment fingerprint. Use when the user wants to send, submit, upload or finish a field run. Requires the job code, needs no account, confirms exactly what will be sent, and hands back a claim URL where the practitioner signs in to be paid.
 ---
 
 # Submit Fieldrun
@@ -25,25 +25,11 @@ observations, `environment.json` for the fingerprint.
 - `run.json` missing a run id: preserve the files and explain that setup is incomplete; do not mint a replacement silently.
 - Call `getRun` before uploading. Require both `ok` and `body.success`. If status is `submitted` or `claimed`, reopen the existing claim link without uploading again. If the saved link is missing, recover the same run's claim route from the configured service's verified web origin.
 - If server status cannot be checked, preserve the work and stop.
-- Require the reviewed outcome, notes, and environment. If required answers are unresolved or the files changed after review, return to `/review-fieldrun` before uploading.
+- Require the reviewed notes and environment. If required answers are unresolved or the files changed after review, return to `/review-fieldrun` before uploading.
 
-### 2. Establish the outcome
+### 2. Link to what will be sent
 
-The outcome is required and must be exactly one of:
-
-| Outcome | Means |
-| --- | --- |
-| `pass` | Finished as the job intended |
-| `friction` | Finished, but something got in the way |
-| `blocker` | Could not finish |
-
-If the notes do not make the outcome unambiguous, ask with AskUserQuestion. Do
-not infer it — the outcome is the field the findings report ranks by, and a
-guess here becomes a wrong number in front of a customer.
-
-### 3. Link to what will be sent
-
-State the outcome and provide clickable links to the reviewed `NOTES.md` and `environment.json` so the user can read what will be sent. Do not reproduce the notes, original job prompt, or raw payload in the conversation. Ask for confirmation only if the user has not already explicitly authorized submission of these results; write any necessary question directly in the conversation with enough context to answer. Never print raw secrets; return to review if any remain.
+Provide clickable links to the reviewed `NOTES.md` and `environment.json` so the user can read what will be sent. Do not reproduce the notes, original job prompt, or raw payload in the conversation. Ask for confirmation only if the user has not already explicitly authorized submission of these results; write any necessary question directly in the conversation with enough context to answer. Never print raw secrets; return to review if any remain.
 
 The user must be able to see the fingerprint before it goes. It includes their
 OS and release, runtime and shell, and the agent inventory — which agents are
@@ -55,9 +41,9 @@ machine. If they are not comfortable with a field, drop it and send the rest
 If they have not completed `/review-fieldrun`, ask them to review before sending. Submission
 cannot be undone from here.
 
-### 4. Submit
+### 3. Submit
 
-Build `payload = { outcome, notes, environment }` from the reviewed saved files, then call `submitRun(runId, payload)` using the resolved helper.
+Build `payload = { notes, environment }` from the reviewed saved files, then call `submitRun(runId, payload)` using the resolved helper.
 
 `RUN_ID` is the id in `run.json`, not the job code. No account is needed to
 send: the upload is anonymous, and it is the claim URL that comes back which
@@ -65,7 +51,7 @@ ties the work to a person.
 
 Require both `ok` and `body.success`. Before uploading, set local `stage: "submit"`. On success, save `status: "submitted"`, `stage: "done"`, `submittedAt`, and the returned `url` and `expiresAt`. The response may omit status; never overwrite it with an undefined value.
 
-Call `getRun(runId)` and verify the ID, job code, submitted/claimed status, outcome, notes, and environment. The server trims surrounding whitespace from notes; compare the readback with the saved notes after that normalization, without ignoring other differences. The server exposes `os`, `runtime`, `shell`, and `agent` at the top level and stores `environment.extra` as `run.environment`. Report submission and verification separately if readback fails; do not upload again merely because verification failed.
+Call `getRun(runId)` and verify the ID, job code, submitted/claimed status, notes, and environment. The server trims surrounding whitespace from notes; compare the readback with the saved notes after that normalization, without ignoring other differences. The server exposes `os`, `runtime`, `shell`, and `agent` at the top level and stores `environment.extra` as `run.environment`. Report submission and verification separately if readback fails; do not upload again merely because verification failed.
 
 Handle failures without losing the local findings:
 
@@ -76,7 +62,7 @@ Handle failures without losing the local findings:
 - `429 RATE_LIMITED`: stop retrying and report the limit.
 - Network interruption or uncertain response: check `getRun` first. Retry once only if it confirms the run is unsubmitted; stop if status remains unknown.
 
-### 5. Report, and hand over the claim URL
+### 4. Report, and hand over the claim URL
 
 The response carries a `url`. **Give it to the user and explain what it is**,
 because this is the one thing they must act on. Write it into `run.json` as

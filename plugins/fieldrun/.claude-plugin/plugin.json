@@ -1,6 +1,6 @@
 {
   "name": "fieldrun",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Run Fieldrun jobs automatically through review and submission, or prepare findings and stop for separate review and submit commands. No account needed until claiming.",
   "author": {
     "name": "Fieldrun"

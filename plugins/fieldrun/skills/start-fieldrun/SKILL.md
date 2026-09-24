@@ -40,7 +40,7 @@ Use `runFiles(code)`. The default directory is `~/.fieldruns/<CODE>/`; `FIELDRUN
 | File | Contents |
 | --- | --- |
 | `job.json` | Code, title, brief, reward, original start timestamp |
-| `run.json` | Run ID, server status, local stage, participation consent, outcome, expiry and claim URL when known |
+| `run.json` | Run ID, server status, local stage, participation consent, expiry and claim URL when known |
 | `PROMPT.md` | Original job prompt, verbatim |
 | `environment.json` | Captured environment, with review redactions applied before submission |
 | `NOTES.md` | Findings, their sources, and questions still awaiting answers |
@@ -89,7 +89,7 @@ Include these participation terms:
 - In both modes, the agent will capture environment information on this machine, perform the job, and write the requested findings. The mode controls whether review and submission follow automatically.
 - Environment information includes OS, runtime, shell, installed agents, plugin/skill/subagent names, session counts, usage dates, and tool invocation counts extracted from session records. Explain any additional data access requested by this job.
 - Review will remove secrets and anonymize identifying details using the rules below.
-- In Automatic, once review is complete, the agent will submit the outcome, notes, and reviewed environment to Fieldrun without a second submission confirmation. In Manual, nothing is submitted until the user requests `submit-fieldrun`. Signing in happens afterward on the claim page.
+- In Automatic, once review is complete, the agent will submit the notes and reviewed environment to Fieldrun without a second submission confirmation. In Manual, nothing is submitted until the user requests `submit-fieldrun`. Signing in happens afterward on the claim page.
 
 Ask whether the user agrees, and **wait for an affirmative response**. Before consent, do not reveal the prompt, create the run directory, collect the environment, or execute the job. Declining ends the workflow. For an existing run without recorded participation consent, show the terms and obtain consent for the selected mode before continuing. A recorded consent remains valid when resuming the same scope; honor later restrictions or withdrawal.
 
@@ -128,7 +128,6 @@ Compare the notes with every requested answer and deliverable in `PROMPT.md`. Re
 
 - **Missing answers:** An unanswered question, empty field, or placeholder requires a question and a pause. Do not silently delete the question to make the run pass.
 - **Weak answers:** Statements such as “it worked” need the actual action and result. If something failed, establish what was tried next and how it ended. Ask only for details that evidence cannot establish.
-- **Unclear outcome:** Establish exactly one of `pass` (completed as intended), `friction` (completed with obstacles), or `blocker` (could not complete). If evidence and answers do not make the outcome unambiguous, ask rather than guess.
 - **Unknown or inapplicable:** Accept an explicit, reasoned “unknown” or “not applicable” when the job permits it. Preserve the limitation. An unavailable required deliverable must be reported as incomplete, not disguised as a pass.
 - **Private information:** Remove API keys, tokens, passwords and connection secrets; anonymize personal names, email addresses and identifying home paths; replace private client, project, host and ticket identifiers with consistent placeholders. Inspect plugin, skill and subagent names too. Keep public product names and technical facts that are needed to understand the finding. Never print raw secrets while explaining a redaction.
 
@@ -138,17 +137,17 @@ Before asking review questions, save the findings collected so far and the unres
 
 Present unresolved questions using the contextual follow-up pattern above. Explain why these answers are needed to finish this job; do not lead with a count of extracted changes or a saved draft. Save `stage: "review"`, and **wait**. Do not submit while any required question remains unresolved. In delegated execution, report the questions to the parent and await actual answers; the parent must not fabricate observations. Incorporate the answers with their provenance and review again. Elapsed time, a generic “continue,” and silence do not supply missing answers.
 
-When review passes, save the final notes, reviewed environment, and outcome. Introduce the final notes as the findings the agent has reviewed and is about to send to Fieldrun. Link to the final `NOTES.md` for the user to read and briefly describe redactions and material limitations without reproducing the notes. Do not require the user to read or approve the notes to continue. Move directly to submit; do not ask for a second submission confirmation or suggest another skill. If the user limited the request to local preparation or review, respect that limit and stop before uploading.
+When review passes, save the final notes and reviewed environment. Introduce the final notes as the findings the agent has reviewed and is about to send to Fieldrun. Link to the final `NOTES.md` for the user to read and briefly describe redactions and material limitations without reproducing the notes. Do not require the user to read or approve the notes to continue. Move directly to submit; do not ask for a second submission confirmation or suggest another skill. If the user limited the request to local preparation or review, respect that limit and stop before uploading.
 
 ## 3. Submit — upload, verify, and open the claim page
 
 Submit only after participation consent covers automatic submission and review has passed.
 
-Build `payload = { outcome, notes, environment }` from the final saved files. Send it with `submitRun(runId, payload)`, using the run ID, not the job code. Set local `stage: "submit"` before the call.
+Build `payload = { notes, environment }` from the final saved files. Send it with `submitRun(runId, payload)`, using the run ID, not the job code. Set local `stage: "submit"` before the call.
 
 On success, save `status: "submitted"`, `stage: "done"`, `url`, `expiresAt`, and `submittedAt` in `run.json`. The response body supplies the URL and expiry but may omit status; do not overwrite status with an undefined value. Keep the local files.
 
-Call `getRun(runId)` and confirm the same ID, job code, submitted/claimed status, outcome, notes, and environment. The server trims surrounding whitespace from notes; compare the readback with the saved notes after that normalization, without ignoring other differences. The server exposes `os`, `runtime`, `shell`, and `agent` at the run's top level and stores the submitted `environment.extra` as `run.environment`. If verification fails, report submission and verification separately; do not upload again merely because verification failed.
+Call `getRun(runId)` and confirm the same ID, job code, submitted/claimed status, notes, and environment. The server trims surrounding whitespace from notes; compare the readback with the saved notes after that normalization, without ignoring other differences. The server exposes `os`, `runtime`, `shell`, and `agent` at the run's top level and stores the submitted `environment.extra` as `run.environment`. If verification fails, report submission and verification separately; do not upload again merely because verification failed.
 
 Give the user the returned claim URL and open it in a visible browser. If the host prevents a subagent from opening a visible tab, ask the parent to open and inspect that exact URL; this is a browser handoff, not another consent or submission step. Keep the claim tab open as a user-facing deliverable when the browser supports that. Inspect the rendered page to confirm it corresponds to this run and presents the claim or sign-in flow. A URL printed in chat or a successful open command alone does not prove that the page loaded. If browser inspection is unavailable or the page fails, report that limitation explicitly.
 

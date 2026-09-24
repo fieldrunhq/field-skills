@@ -62,21 +62,26 @@ involved. The value is in what broke, not in whose machine it broke on.
 
 Compare the notes with `PROMPT.md`. Missing required answers and placeholders block completion; ask for what evidence cannot answer, save the unresolved items with `stage: "review"`, and wait. Do not invent personal experience or erase unanswered questions. Explicit, reasoned unknowns may remain when the job permits them; a missing required deliverable is incomplete, not a pass.
 
-An accepted run needs an outcome and something a reader can act on. Before
-declaring it ready, confirm:
+An accepted run needs something a reader can act on. Before declaring it ready,
+confirm:
 
-- **outcome** is one of `pass`, `friction`, `blocker`;
 - the notes say what actually happened, not just that it worked;
 - if something failed, the notes say what the user did next.
 
-"It worked" is a valid outcome and a poor observation. Ask what they expected,
-where they hesitated, and what they had to look up. Those are the findings a
-cloud VM cannot produce, and they are the reason the run is worth paying for.
+"It worked" is a poor observation. Ask what they expected, where they
+hesitated, and what they had to look up. Those are the findings a cloud VM
+cannot produce, and they are the reason the run is worth paying for.
+
+Do not grade the run. Whether it counts as a clean pass, a workaround or a
+dead end is Fieldrun's call at review, not the runner's — one person's
+"friction" is the next person's "worked fine", and a customer counting them
+cannot tell the difference. Report what happened; the judgment is made once,
+by one party, downstream.
 
 ### 5. Show the output, report, and say what happens next
 
 After any edits, link to the saved `NOTES.md` and invite the user to read it. Do not paste its contents into the conversation. Tell them whether it is ready and briefly explain what changed. Write any unresolved questions directly in the conversation.
-For an unsubmitted run, when ready, save the outcome in `run.json` and set local `stage: "submit"` without changing server status. Preserve terminal stages for already-submitted runs. Stop after this review even if the saved automatic-submission flag is true: invoking review alone does not request an upload.
+For an unsubmitted run, when ready, set local `stage: "submit"` in `run.json` without changing server status. Preserve terminal stages for already-submitted runs. Stop after this review even if the saved automatic-submission flag is true: invoking review alone does not request an upload.
 Then end with this block, with the real code substituted and the `→` on whichever
 line is actually next:
 
@@ -85,13 +90,13 @@ line is actually next:
 
   →  /submit-fieldrun <CODE>     send it, and get your claim link
 
-     ~/.fieldruns/<CODE>/NOTES.md    still missing an outcome or observations
+     ~/.fieldruns/<CODE>/NOTES.md    still missing observations
 
   ────────────────────────────────────────────────────────────────
 ```
 
-If the run is not ready — no outcome, or notes that say nothing a reader can
-act on — put the arrow on the NOTES.md line instead and say what is missing.
+If the run is not ready — notes that say nothing a reader can act on — put the
+arrow on the NOTES.md line instead and say what is missing.
 Only ever one arrow.
 
 ## Configuration
