@@ -82,7 +82,7 @@ End with this block, with the real URL substituted:
 
 Open the returned claim URL in a visible browser and inspect the page. Verify that it shows this run's claim or sign-in flow; if inspection is unavailable, report that limitation. Do not sign in or claim on the user's behalf.
 
-Then confirm what was sent and that the customer reviews it next. Leave the
+Then confirm what was sent and that Fieldrun reviews it after account linking. Leave the
 local directory in place; the practitioner keeps their own record.
 
 ## Configuration

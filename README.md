@@ -1,14 +1,14 @@
 # field-skills
 
-Run Fieldrun field jobs on your own machine in automatic or manual mode.
+Run Fieldrun field jobs on your own machine in automatic submission or review before submission.
 
-Run `/start-fieldrun <CODE>` and choose a mode. **Automatic** proceeds through three stages:
+Run `/start-fieldrun <CODE>` and choose a mode. **Submit automatically** proceeds through three stages:
 
-1. **Start:** Show the brief, reward, collection scope and automatic submission terms. Wait for participation consent, then perform the job and prepare findings.
+1. **Start:** Explain the task, estimated duration, reward conditions, submission/account-linking deadline and collection scope. The user selects a mode to authorize participation, then the agent performs the job and prepares findings.
 2. **Review:** Check missing answers, weak observations, unclear outcomes and private information. Ask for unresolved details and wait. Apply the privacy rules agreed at the start.
 3. **Submit:** When review passes, upload without a second submission confirmation, verify the saved result, and open the claim page.
 
-**Manual** performs the same job and writes the findings into `NOTES.md`, then stops before review and submission. Read the prepared notes, then run `/review-fieldrun <CODE>` to review locally and `/submit-fieldrun <CODE>` to submit explicitly. Review alone never uploads.
+**Review before submitting** performs the same job and writes the findings into `NOTES.md`, then stops before review and submission. Read the prepared notes, then run `/review-fieldrun <CODE>` to review locally and `/submit-fieldrun <CODE>` to submit explicitly. Review alone never uploads.
 
 Use the same start command to resume with the saved mode. An already-submitted run opens its existing claim link without another upload.
 
@@ -38,7 +38,7 @@ Install the plugin and run a job. That is the whole setup.
 
 ```
 POST /runs/pending/start        → run id, brief, prompt
-  ↓ you read the brief and say yes; the run directory is written
+  ↓ you read the task summary and select a mode; the run directory is written
 POST /runs/pending/:id/submit   → your claim URL
   ↓ open it and sign in
 ```
@@ -47,11 +47,11 @@ None of that needs a credential. You should be able to do a job and see what
 the work is like before deciding to have anything to do with us — the account
 is only needed to be *paid*, so that is the one place it is asked for: the
 claim link you get after submitting. Keep that link; it is the only way to
-claim the run. The skill reports the absolute expiry returned by the server; the window starts when the run starts, not when it is submitted.
+claim the run. Submit and link the result to your account before the server expiry, 14 days from starting. Fieldrun acceptance credits the reward to your balance; withdrawal requires at least $10 and an enabled payout account. The API supplies these participation terms so the skill can explain them.
 
 Starting a job reserves nothing. No slot is consumed and no commitment is made,
-so reading a brief and walking away costs the job nothing. The skill still asks
-before it writes anything or shows you the prompt.
+so reading a brief and walking away costs the job nothing. The skill summarizes the returned prompt before asking for a mode. It waits
+for that selection before collecting local information or doing the work.
 
 ## Why the machine captures the environment
 
